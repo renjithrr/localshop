@@ -1,0 +1,15 @@
+### Django ###
+*.log
+*.pot
+*.pyc
+__pycache__/
+local.py
+db.sqlite3
+db.sqlite3-journal
+media
+.idea/
+downloaded/
+# django migrations
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
