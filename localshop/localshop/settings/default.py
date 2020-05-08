@@ -140,8 +140,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ADMINS = [
   ('Renjith', 'renjithr.mec@gmail.com'),
 ]
-EMAIL_HOST='localhost'
-EMAIL_PORT=1025
+# EMAIL_HOST='localhost'
+# EMAIL_PORT=1025
 
 
 LOGGING = {
