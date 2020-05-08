@@ -26,9 +26,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'sm!!wp_i2q0hkqrf@d9e7#5p@cw1$2n=^*jwy2ck405f+pv_^o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['52.15.140.119']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_yasg',
-    'user'
+    'user',
+    'product'
 ]
 
 MIDDLEWARE = [
@@ -129,8 +130,39 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 AUTH_USER_MODEL = 'user.AppUser'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+ADMINS = [
+  ('Renjith', 'renjithr.mec@gmail.com'),
+]
+EMAIL_HOST='localhost'
+EMAIL_PORT=1025
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+'file': {
+        'level':'DEBUG',
+        'class':'logging.FileHandler',
+        'filename': os.path.join(BASE_DIR, 'localshop.log'),
+    },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins', 'file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
