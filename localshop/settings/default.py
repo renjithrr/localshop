@@ -188,6 +188,3 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_LOCATION = 'static'
 AWS_DEFAULT_ACL = None
 PUBLIC_FILE_STORAGE = 'localshop.settings.storage_backends.PublicMediaStorage'
-
-# AWSAccessKeyId=AKIAI435TBQNUXPOOYNA
-# AWSSecretKey=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
