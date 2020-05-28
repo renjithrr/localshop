@@ -8,10 +8,10 @@ from drf_yasg import openapi
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import INVALID_CREDENTIALS
 from utilities.messages import AUTHENTICATION_SUCCESSFUL
-from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR
+from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY
 
-from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser
-from user.serializers import UserSerializer
+from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop
+from user.serializers import AccountSerializer, ShopDetailSerializer
 
 
 # class DeviceTokenView(APIView, ResponseViewMixin):
@@ -102,13 +102,93 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
         }))
     def post(self, request):
         mobile_number = request.data.get('mobile_number')
-        otp = request.data.get('mobile_number')
+        otp = request.data.get('otp')
         try:
             user = AppUser.objects.get(mobile_number=mobile_number)
+            token, _ = Token.objects.get_or_create(user=user)
+            user.is_active = True
+            user.save()
             return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
                                          data={'user_id': user.id,
-                                               'user_type': user.role
+                                               'user_type': user.role,
+                                               'token': token.key
                                                })
         except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class AccountDetailsView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'account_number': openapi.Schema(type=openapi.TYPE_STRING),
+            'ifsc_code': openapi.Schema(type=openapi.TYPE_STRING),
+            'account_name': openapi.Schema(type=openapi.TYPE_STRING),
+
+        }))
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        try:
+            user = AppUser.objects.get(id=user_id)
+            serializer = AccountSerializer(instance=user, data=request.data)
+            if serializer.is_valid():
+                print("here")
+                serializer.save()
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.success_response(code='HTTP_200_OK', message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
             logging.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class ShopDetailsView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
+    def post(self, request):
+        user_id = request.data.get('user')
+        try:
+            try:
+                shop = Shop.objects.get(user=user_id, shop_name=request.data.get('shop_name'))
+                serializer = ShopDetailSerializer(instance=shop, data=request.data)
+            except Shop.DoesNotExist:
+                serializer = ShopDetailSerializer(data=request.data)
+            if serializer.is_valid():
+                shop = serializer.save()
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shop_id': shop.id},
+                                         message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
+            logging.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class GstDataView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'shop_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'gst_reg_number': openapi.Schema(type=openapi.TYPE_STRING),
+            'gst_image': openapi.Schema(type=openapi.TYPE_FILE),
+
+        }))
+    def post(self, request):
+        shop_id = request.data.get('shop_id')
+        try:
+            shop = Shop.objects.get(id=shop_id)
+            shop.gst_image = request.FILES['gst_image']
+            shop.gst_reg_number = request.data.get('gst_reg_number')
+            shop.save()
+            return self.success_response(code='HTTP_200_OK', data={'image_url': shop.gst_image.url},
+                                         message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

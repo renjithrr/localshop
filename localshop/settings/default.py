@@ -41,9 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_yasg',
     'user',
-    'product'
+    'product',
+    'adminrestrict',
+    'storages'
 ]
 
 MIDDLEWARE = [
@@ -54,6 +57,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'admin_ip_restrictor.middleware.AdminIPRestrictorMiddleware',
+    # 'localshop.middleware.admin_restrict_middleware.AdminRestrictMiddleware'
+
 ]
 
 ROOT_URLCONF = 'localshop.urls'
@@ -132,7 +138,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    )
 }
 AUTH_USER_MODEL = 'user.AppUser'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -144,25 +156,38 @@ EMAIL_HOST='localhost'
 EMAIL_PORT=1025
 
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-'file': {
-        'level':'DEBUG',
-        'class':'logging.FileHandler',
-        'filename': os.path.join(BASE_DIR, 'localshop.log'),
-    },
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins', 'file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'mail_admins': {
+#             'level': 'ERROR',
+#             'class': 'django.utils.log.AdminEmailHandler'
+#         },
+# 'file': {
+#         'level':'DEBUG',
+#         'class':'logging.FileHandler',
+#         'filename': os.path.join(BASE_DIR, 'localshop.log'),
+#     },
+#     },
+#     'loggers': {
+#         'django.request': {
+#             'handlers': ['mail_admins', 'file'],
+#             'level': 'ERROR',
+#             'propagate': True,
+#         },
+#     }
+# }
+
+AWS_ACCESS_KEY_ID = 'AKIA6F4UE3LJ3HBX2C5C'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'localshop-stack-codedeploybucket-il6ww87r45ur'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400'
 }
+AWS_LOCATION = 'static'
+AWS_DEFAULT_ACL = None
+PUBLIC_FILE_STORAGE = 'localshop.settings.storage_backends.PublicMediaStorage'
+
+# AWSAccessKeyId=AKIAI435TBQNUXPOOYNA
+# AWSSecretKey=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

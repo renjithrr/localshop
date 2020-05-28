@@ -1,12 +1,14 @@
 from rest_framework import serializers
-from user.models import AppUser as User
+from user.models import AppUser as User, Shop
 
 
-class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True, allow_blank=False)
-    password = serializers.CharField(required=True, allow_blank=False)
-    id = serializers.CharField(required=False, allow_blank=False)
-
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'password', 'id']
+        fields = ['account_name', 'ifsc_code', 'account_number']
+
+
+class ShopDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shop
+        fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'address', 'pincode']

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from user.models import AppUser, DeviceToken
+from user.models import AppUser, DeviceToken, Shop, AppConfigData
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -11,5 +11,14 @@ class DeviceTokenAdmin(admin.ModelAdmin):
     pass
 
 
+class ShopAdmin(admin.ModelAdmin):
+    list_display = ('vendor_name', 'user', 'shop_name', 'business_name')
+
+
+class AppConfigDataAdmin(admin.ModelAdmin):
+    list_display = ('key', 'value')
+
 admin.site.register(AppUser, UserAdmin)
 admin.site.register(DeviceToken, DeviceTokenAdmin)
+admin.site.register(Shop, ShopAdmin)
+admin.site.register(AppConfigData, AppConfigDataAdmin)
