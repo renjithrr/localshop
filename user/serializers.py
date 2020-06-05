@@ -11,4 +11,11 @@ class AccountSerializer(serializers.ModelSerializer):
 class ShopDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'address', 'pincode']
+        fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'shop_category', 'gst_reg_number']
+
+
+class ShopLocationDataSerializer(serializers.ModelSerializer):
+    delivery_type = serializers.ListField()
+    class Meta:
+        model = Shop
+        fields = ['address', 'pincode', 'lat', 'long', 'opening', 'closing', 'delivery_type']

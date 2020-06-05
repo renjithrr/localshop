@@ -5,13 +5,16 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from twilio.rest import Client
+
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import INVALID_CREDENTIALS
 from utilities.messages import AUTHENTICATION_SUCCESSFUL
-from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY
+from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
+from utilities.utils import OTPgenerator
 
-from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop
-from user.serializers import AccountSerializer, ShopDetailSerializer
+from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData
+from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer
 
 
 # class DeviceTokenView(APIView, ResponseViewMixin):
@@ -80,8 +83,18 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 mobile_number=mobile_number,
                 defaults={'role': USER_TYPE_CHOICES.vendor, 'is_active': False},
             )
-            if created:
-                pass
+            if user:
+                account_sid = AppConfigData.objects.get(key='TWILIO_ACCOUNT_ID').value
+                auth_token = AppConfigData.objects.get(key='TWILIO_AUTH_TOKEN').value
+                client = Client(account_sid, auth_token)
+                otp = OTPgenerator()
+                message = client.messages.create(
+                    body=otp,
+                    from_='+17402791825',
+                    to=mobile_number
+                )
+                user.verification_otp = otp
+                user.save()
             return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
                                          data={'user_id': user.id,
                                                'user_type': user.role
@@ -105,14 +118,18 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
         otp = request.data.get('otp')
         try:
             user = AppUser.objects.get(mobile_number=mobile_number)
-            token, _ = Token.objects.get_or_create(user=user)
-            user.is_active = True
-            user.save()
-            return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
-                                         data={'user_id': user.id,
-                                               'user_type': user.role,
-                                               'token': token.key
-                                               })
+            if user.verification_otp == otp:
+                token, _ = Token.objects.get_or_create(user=user)
+                user.is_active = True
+                user.save()
+                return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
+                                             data={'user_id': user.id,
+                                                   'user_type': user.role,
+                                                   'token': token.key
+                                                   })
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=INVALID_OTP)
+
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
@@ -136,7 +153,6 @@ class AccountDetailsView(APIView, ResponseViewMixin):
             user = AppUser.objects.get(id=user_id)
             serializer = AccountSerializer(instance=user, data=request.data)
             if serializer.is_valid():
-                print("here")
                 serializer.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
@@ -160,6 +176,8 @@ class ShopDetailsView(APIView, ResponseViewMixin):
                 serializer = ShopDetailSerializer(data=request.data)
             if serializer.is_valid():
                 shop = serializer.save()
+                # shop.gst_image = request.FILES['gst_image']
+                shop.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK',
@@ -170,25 +188,22 @@ class ShopDetailsView(APIView, ResponseViewMixin):
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
-class GstDataView(APIView, ResponseViewMixin):
+class LocationDataView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'shop_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-            'gst_reg_number': openapi.Schema(type=openapi.TYPE_STRING),
-            'gst_image': openapi.Schema(type=openapi.TYPE_FILE),
-
-        }))
+    @swagger_auto_schema(tags=['user'], request_body=ShopLocationDataSerializer())
     def post(self, request):
         shop_id = request.data.get('shop_id')
         try:
             shop = Shop.objects.get(id=shop_id)
-            shop.gst_image = request.FILES['gst_image']
-            shop.gst_reg_number = request.data.get('gst_reg_number')
-            shop.save()
-            return self.success_response(code='HTTP_200_OK', data={'image_url': shop.gst_image.url},
+            print(shop_id)
+            serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                print(serializer.errors)
+            return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

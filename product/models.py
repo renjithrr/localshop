@@ -1,11 +1,18 @@
 from django.db import models
 from utilities.utils import Kw, Konstants
 from localshop.settings.storage_backends import PublicMediaStorage
-
+from multiselectfield import MultiSelectField
+from user.models import AuditedModel
 
 CHOICES = Konstants(
     Kw(available=1, label='Available'),
     Kw(not_available=2, label='Not Available'),
+)
+
+UNIT_CHOICES = Konstants(
+    Kw(number=1, label='Number'),
+    Kw(kg=2, label='KG'),
+    Kw(litre=3, label='Litre'),
 )
 
 COLOR_CHOICES = Konstants(
@@ -20,38 +27,62 @@ COLOR_CHOICES = Konstants(
 
 
 
-# class Brand(models.Model):
-#     name = models.CharField(max_length=255)
-#     status = models.CharField(max_length=10, choices=CHOICES.choices())
-#
-#     def __str__(self):
-#         return self.name
+class Brand(models.Model):
+    name = models.CharField(max_length=255)
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
-    status = models.CharField(max_length=10, choices=CHOICES.choices())
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
 
     def __str__(self):
         return self.name
 
 
-class Product(models.Model):
-    # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
+class Product(AuditedModel, models.Model):
     name = models.CharField(max_length=255)
+    product_id = models.CharField(max_length=10)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    size = models.CharField(max_length=10, choices=CHOICES.choices())
-    color = models.CharField(max_length=10)
-    code = models.CharField(max_length=10)
-    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    size = models.CharField(max_length=20, blank=True, null=True)
+    color = MultiSelectField(choices=COLOR_CHOICES.choices())
     quantity = models.IntegerField(blank=True, null=True)
-    mrp = models.FloatField(max_length=100)
-    offer_prize = models.FloatField(max_length=100, blank=True, null=True)
-    status = models.CharField(max_length=10, choices=CHOICES.choices())
     description = models.TextField(blank=True, null=True)
 
+    mrp = models.FloatField(max_length=100)
+    offer_prize = models.FloatField(max_length=100, blank=True, null=True)
+    lowest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
+    highest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
+    hsn_code = models.CharField(max_length=10)
+    tax_rate = models.CharField(max_length=10, blank=True, null=True)
+    moq = models.IntegerField(blank=True, null=True)
+    unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
+
+
     def __str__(self):
         return self.name
+
+
+class ProductVarient(AuditedModel, models.Model):
+    product = models.ForeignKey(Product, related_name='product_varients', on_delete=models.CASCADE)
+    size = models.CharField(max_length=10, choices=CHOICES.choices(), blank=True, null=True)
+    color = MultiSelectField(choices=COLOR_CHOICES.choices())
+    quantity = models.IntegerField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    mrp = models.FloatField(max_length=100)
+    offer_prize = models.FloatField(max_length=100, blank=True, null=True)
+    lowest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
+    highest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
+    moq = models.IntegerField(blank=True, null=True)
+    unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
 
 
 # class Order(models.Model):
