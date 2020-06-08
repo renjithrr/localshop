@@ -9,11 +9,11 @@ from twilio.rest import Client
 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import INVALID_CREDENTIALS
-from utilities.messages import AUTHENTICATION_SUCCESSFUL
+from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
 from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
 from utilities.utils import OTPgenerator
 
-from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData
+from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer
 
 
@@ -163,7 +163,7 @@ class AccountDetailsView(APIView, ResponseViewMixin):
 
 
 class ShopDetailsView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
     def post(self, request):
@@ -189,7 +189,7 @@ class ShopDetailsView(APIView, ResponseViewMixin):
 
 
 class LocationDataView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=['user'], request_body=ShopLocationDataSerializer())
     def post(self, request):
@@ -201,9 +201,27 @@ class LocationDataView(APIView, ResponseViewMixin):
             if serializer.is_valid():
                 serializer.save()
             else:
-                print(serializer.errors)
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class CommonParamsView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    # @swagger_auto_schema(tags=['user'], request_body=ShopLocationDataSerializer())
+    def get(self, request):
+        try:
+            shop_choices = list(ShopCategory.objects.values_list('id', 'name'))
+            print(shop_choices)
+            delivery_choices = DELIVERY_CHOICES.choices()
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shopcategories': dict(shop_choices),
+                                               'delivery_choices': dict(delivery_choices)},
+                                         message=SUCCESS)
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

@@ -12,7 +12,7 @@ USER_TYPE_CHOICES = Konstants(
 )
 
 SHOP_CATEGORY_CHOICES = Konstants(
-    Kw(vendor=1, label='Vendor'),
+    Kw(electronics=1, label='Vendor'),
     Kw(customer=2, label='Customer'),
 )
 
@@ -59,12 +59,20 @@ class AppConfigData(models.Model):
     description = models.TextField(blank=True, null=True)
 
 
+class ShopCategory(models.Model):
+    name = models.CharField(max_length=250)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 class Shop(AuditedModel, models.Model):
     user = models.ForeignKey(AppUser, related_name='user_shops', on_delete=models.CASCADE)
     vendor_name = models.CharField(max_length=30, blank=True, null=True)
     shop_name = models.CharField(max_length=50, blank=True, null=True)
     business_name = models.CharField(max_length=50, blank=True, null=True)
-    shop_category = models.IntegerField(choices=SHOP_CATEGORY_CHOICES.choices(), null=True)
+    shop_category = models.ForeignKey(ShopCategory, related_name='category_shops', on_delete=models.CASCADE,
+                                      blank=True, null=True)
     gst_reg_number = models.CharField(max_length=50, blank=True, null=True)
     gst_image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
@@ -75,3 +83,6 @@ class Shop(AuditedModel, models.Model):
     opening = models.TimeField(blank=True, null=True)
     closing = models.TimeField(blank=True, null=True)
     delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
+
+    def __str__(self):
+        return self.shop_name

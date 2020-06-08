@@ -62,7 +62,7 @@ class Product(AuditedModel, models.Model):
     moq = models.IntegerField(blank=True, null=True)
     unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
-    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
 
 
     def __str__(self):
@@ -72,6 +72,7 @@ class Product(AuditedModel, models.Model):
 class ProductVarient(AuditedModel, models.Model):
     product = models.ForeignKey(Product, related_name='product_varients', on_delete=models.CASCADE)
     size = models.CharField(max_length=10, choices=CHOICES.choices(), blank=True, null=True)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     color = MultiSelectField(choices=COLOR_CHOICES.choices())
     quantity = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -81,9 +82,14 @@ class ProductVarient(AuditedModel, models.Model):
     highest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
     moq = models.IntegerField(blank=True, null=True)
     unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
+    tax_rate = models.CharField(max_length=10, blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
-    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
+    status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
 
+
+class ProductVarientImage(models.Model):
+    varient = models.ForeignKey(ProductVarient, on_delete=models.CASCADE)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
 # class Order(models.Model):
 #     date = models.DateTimeField(auto_now_add=True)
