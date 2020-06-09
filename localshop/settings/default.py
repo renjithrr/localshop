@@ -142,7 +142,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'PAGE_SIZE': 5,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 }
 AUTH_USER_MODEL = 'user.AppUser'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

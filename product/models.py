@@ -45,7 +45,7 @@ class Category(models.Model):
 
 class Product(AuditedModel, models.Model):
     name = models.CharField(max_length=255)
-    product_id = models.CharField(max_length=10)
+    product_id = models.CharField(max_length=10, blank=True, null=True)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     size = models.CharField(max_length=20, blank=True, null=True)
@@ -53,11 +53,11 @@ class Product(AuditedModel, models.Model):
     quantity = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
-    mrp = models.FloatField(max_length=100)
+    mrp = models.FloatField(max_length=100, blank=True, null=True)
     offer_prize = models.FloatField(max_length=100, blank=True, null=True)
     lowest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
     highest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
-    hsn_code = models.CharField(max_length=10)
+    hsn_code = models.CharField(max_length=10, blank=True, null=True)
     tax_rate = models.CharField(max_length=10, blank=True, null=True)
     moq = models.IntegerField(blank=True, null=True)
     unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)

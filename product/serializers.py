@@ -3,6 +3,7 @@ from product.models import Product, ProductVarient
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    color = serializers.ListField()
     class Meta:
         model = Product
         fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand']
