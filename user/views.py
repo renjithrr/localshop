@@ -85,7 +85,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 mobile_number=mobile_number,
                 defaults={'role': USER_TYPE_CHOICES.vendor, 'is_active': False},
             )
-            if user:
+            if created:
                 account_sid = AppConfigData.objects.get(key='TWILIO_ACCOUNT_ID').value
                 auth_token = AppConfigData.objects.get(key='TWILIO_AUTH_TOKEN').value
                 client = Client(account_sid, auth_token)
@@ -103,6 +103,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                                                })
         except Exception as e:
             logging.exception(e)
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
