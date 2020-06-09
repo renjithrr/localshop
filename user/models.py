@@ -103,7 +103,7 @@ class Shop(AuditedModel, models.Model):
 
 class PaymentMethod(models.Model):
     payment_type = models.CharField(max_length=30, blank=True, null=True)
-    choices = JSONField(default=dict(PAYMENT_CHOICES.choices()))
+    choices = JSONField(default=dict(PAYMENT_CHOICES.choices()), blank=True, null=True)
 
     def __str__(self):
         return self.payment_type
