@@ -13,7 +13,9 @@ from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
 from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
 from utilities.utils import OTPgenerator
 
-from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory
+from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
+    PaymentMethod, UserPaymentMethod
+
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer
 
 
@@ -203,6 +205,30 @@ class LocationDataView(APIView, ResponseViewMixin):
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK',
+                                         data={'user_id': shop.user.id},
+                                         message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class PaymentMethodView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'payment_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
+
+        }))
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        payment_type = request.data.get('payment_type')
+        try:
+            for value in payment_type:
+                UserPaymentMethod.objects.get_or_create(user_id=user_id, payment_method_id=value)
+            return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
             print(e)
@@ -212,15 +238,20 @@ class LocationDataView(APIView, ResponseViewMixin):
 class CommonParamsView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    # @swagger_auto_schema(tags=['user'], request_body=ShopLocationDataSerializer())
     def get(self, request):
         try:
+            values = {}
             shop_choices = list(ShopCategory.objects.values_list('id', 'name'))
-            print(shop_choices)
+            payment_methods = PaymentMethod.objects.all()
+            for value in payment_methods:
+                values.update({value.id: {value.payment_type: value.choices}})
+
             delivery_choices = DELIVERY_CHOICES.choices()
             return self.success_response(code='HTTP_200_OK',
                                          data={'shopcategories': dict(shop_choices),
-                                               'delivery_choices': dict(delivery_choices)},
+                                               'delivery_choices': dict(delivery_choices),
+                                               'payment_methods': values
+                                               },
                                          message=SUCCESS)
         except Exception as e:
             print(e)

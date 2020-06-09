@@ -9,5 +9,7 @@ urlpatterns = [
     path('shop-details/', ShopDetailsView.as_view()),
     path('location-info/', LocationDataView.as_view()),
     path('common-params/', CommonParamsView.as_view()),
+    path('payment-methods/', PaymentMethodView.as_view()),
+
     # path('devices/', DeviceTokenView.as_view()),
 ]

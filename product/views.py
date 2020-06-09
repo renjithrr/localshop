@@ -60,8 +60,10 @@ class ProductPricingView(APIView, ResponseViewMixin):
 
 class ProductListingView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
-
-    # @swagger_auto_schema(tags=['product'], request_body=ProductPricingSerializer)
+    serializer_class = ProductListingSerializer
+    test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
+                                   type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request):
         try:
             products = Product.objects.all()

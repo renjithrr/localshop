@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser, User, UserManager
 from localshop.settings.storage_backends import PublicMediaStorage
 from utilities.utils import Kw, Konstants
 from multiselectfield import MultiSelectField
+from django.contrib.postgres.fields import JSONField
+
 
 
 USER_TYPE_CHOICES = Konstants(
@@ -19,6 +21,14 @@ SHOP_CATEGORY_CHOICES = Konstants(
 DELIVERY_CHOICES = Konstants(
     Kw(pickup=1, label='Pick up'),
     Kw(home_delivery=2, label='Home delivery'),
+    Kw(bulk_delivery=3, label='Bulk delivery'),
+)
+
+PAYMENT_CHOICES = Konstants(
+    Kw(google_pay=1, label='Google pay'),
+    Kw(paytm=2, label='Paytm'),
+    Kw(credit_card=3, label='Credit card'),
+    Kw(debit_card=4, label='Debit card')
 )
 
 
@@ -66,6 +76,7 @@ class ShopCategory(models.Model):
     def __str__(self):
         return self.name
 
+
 class Shop(AuditedModel, models.Model):
     user = models.ForeignKey(AppUser, related_name='user_shops', on_delete=models.CASCADE)
     vendor_name = models.CharField(max_length=30, blank=True, null=True)
@@ -83,6 +94,24 @@ class Shop(AuditedModel, models.Model):
     opening = models.TimeField(blank=True, null=True)
     closing = models.TimeField(blank=True, null=True)
     delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
+    self_delivery_charge = models.FloatField(blank=True, null=True)
+    bulk_delivery_charge = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return self.shop_name
+
+
+class PaymentMethod(models.Model):
+    payment_type = models.CharField(max_length=30, blank=True, null=True)
+    choices = JSONField(default=dict(PAYMENT_CHOICES.choices()))
+
+    def __str__(self):
+        return self.payment_type
+
+
+class UserPaymentMethod(models.Model):
+    user = models.ForeignKey(AppUser, related_name='user_payments', on_delete=models.CASCADE)
+    payment_method = models.ForeignKey(PaymentMethod, related_name='user_payment_methods', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.username

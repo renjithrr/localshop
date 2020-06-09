@@ -1,5 +1,5 @@
 from django.contrib import admin
-from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory
+from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory, PaymentMethod, UserPaymentMethod
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -23,8 +23,18 @@ class ShopCategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
 
+class PaymentMethodAdmin(admin.ModelAdmin):
+    list_display = ('payment_type', 'choices')
+
+
+class UserPaymentMethodAdmin(admin.ModelAdmin):
+    list_display = ('user', 'payment_method')
+
+
 admin.site.register(AppUser, UserAdmin)
 admin.site.register(DeviceToken, DeviceTokenAdmin)
 admin.site.register(Shop, ShopAdmin)
 admin.site.register(AppConfigData, AppConfigDataAdmin)
 admin.site.register(ShopCategory, ShopCategoryAdmin)
+admin.site.register(PaymentMethod, PaymentMethodAdmin)
+admin.site.register(UserPaymentMethod, UserPaymentMethodAdmin)

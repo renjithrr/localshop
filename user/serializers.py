@@ -18,4 +18,5 @@ class ShopLocationDataSerializer(serializers.ModelSerializer):
     delivery_type = serializers.ListField()
     class Meta:
         model = Shop
-        fields = ['address', 'pincode', 'lat', 'long', 'opening', 'closing', 'delivery_type']
+        fields = ['address', 'pincode', 'lat', 'long', 'opening', 'closing', 'delivery_type', 'self_delivery_charge',
+                  'bulk_delivery_charge']
