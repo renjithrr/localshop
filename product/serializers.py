@@ -10,10 +10,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductPricingSerializer(serializers.ModelSerializer):
+    product_id = serializers.SerializerMethodField('get_id')
     class Meta:
         model = Product
-        fields = ['mrp', 'offer_prize', 'lowest_selling_rate', 'highest_selling_rate', 'hsn_code', 'tax_rate', 'moq']
+        fields = ['product_id', 'mrp', 'offer_prize', 'lowest_selling_rate', 'highest_selling_rate',
+                  'hsn_code', 'tax_rate', 'moq', 'unit']
 
+    def get_id(self, obj):
+        return obj.id
 
 class ProductListingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,6 +26,7 @@ class ProductListingSerializer(serializers.ModelSerializer):
 
 
 class ProductVarientSerializer(serializers.ModelSerializer):
+    color = serializers.ListField()
     class Meta:
         model = ProductVarient
         fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',

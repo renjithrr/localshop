@@ -11,8 +11,9 @@ from drf_yasg.utils import swagger_auto_schema
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY
-from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer
-from product.models import Product, ProductVarientImage
+from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
+    ProductVarientSerializer
+from product.models import Product, ProductVarientImage, ProductVarient
 from product.forms import VarientImageForm
 
 
@@ -90,25 +91,30 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
 class ProductVarientView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(tags=['product'], request_body=ProductPricingSerializer)
+    @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
     def post(self, request):
-        product_id = request.data.get('product_id')
+        product_id = request.data.get('product')
         try:
-            product = Product.objects.get(id=product_id)
-            serializer = ProductPricingSerializer(instance=product, data=request.data)
+            try:
+                varient = ProductVarient.objects.get(product=product_id, size=request.data.get('size'),
+                                                     brand=request.data.get('brand'), mrp=request.data.get('mrp'))
+                serializer = ProductVarientSerializer(instance=varient, data=request.data)
+            except ProductVarient.DoesNotExist:
+
+                serializer = ProductVarientSerializer(data=request.data)
             if serializer.is_valid():
                 varient = serializer.save()
-                ImageFormSet = modelformset_factory(ProductVarientImage,
-                                                    form=VarientImageForm, extra=3)
-                formset = ImageFormSet(request.POST, request.FILES,
-                                       queryset=ProductVarientImage.objects.none())
-                for form in formset.cleaned_data:
-                    # this helps to not crash if the user
-                    # do not upload all the photos
-                    if form:
-                        image = form['image']
-                        photo = ProductVarientImage(varient=varient, image=image)
-                        photo.save()
+                # ImageFormSet = modelformset_factory(ProductVarientImage,
+                #                                     form=VarientImageForm, extra=3)
+                # formset = ImageFormSet(request.POST, request.FILES,
+                #                        queryset=ProductVarientImage.objects.none())
+                # for form in fo    rmset.cleaned_data:
+                #     # this helps to not crash if the user
+                #     # do not upload all the photos
+                #     if form:
+                #         image = form['image']
+                #         photo = ProductVarientImage(varient=varient, image=image)
+                #         photo.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK',

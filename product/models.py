@@ -71,7 +71,7 @@ class Product(AuditedModel, models.Model):
 
 class ProductVarient(AuditedModel, models.Model):
     product = models.ForeignKey(Product, related_name='product_varients', on_delete=models.CASCADE)
-    size = models.CharField(max_length=10, choices=CHOICES.choices(), blank=True, null=True)
+    size = models.CharField(max_length=20, blank=True, null=True)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     color = MultiSelectField(choices=COLOR_CHOICES.choices())
     quantity = models.IntegerField(blank=True, null=True)
