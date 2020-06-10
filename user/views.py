@@ -241,17 +241,14 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            values = {}
-            shop_choices = list(ShopCategory.objects.values_list('id', 'name'))
-            payment_methods = PaymentMethod.objects.all()
-            for value in payment_methods:
-                values.update({value.id: {value.payment_type: value.choices}})
-
-            delivery_choices = DELIVERY_CHOICES.choices()
+            shop_choices = [{'id': shop.id, 'category': shop.name} for shop in ShopCategory.objects.all()]
+            payment_methods = [{'id': method.id, 'method': method.payment_type} for method in PaymentMethod.objects.all()]
+            delivery_choices = DELIVERY_CHOICES.choices()git 
+            delivery_choices = [{'id': shop[0], 'choice': shop[1]} for shop in delivery_choices]
             return self.success_response(code='HTTP_200_OK',
-                                         data={'shopcategories': dict(shop_choices),
-                                               'delivery_choices': dict(delivery_choices),
-                                               'payment_methods': values
+                                         data={'shopcategories': shop_choices,
+                                               'delivery_choices': delivery_choices,
+                                               'payment_methods': payment_methods
                                                },
                                          message=SUCCESS)
         except Exception as e:
