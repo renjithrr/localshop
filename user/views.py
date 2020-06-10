@@ -243,7 +243,7 @@ class CommonParamsView(APIView, ResponseViewMixin):
         try:
             shop_choices = [{'id': shop.id, 'category': shop.name} for shop in ShopCategory.objects.all()]
             payment_methods = [{'id': method.id, 'method': method.payment_type} for method in PaymentMethod.objects.all()]
-            delivery_choices = DELIVERY_CHOICES.choices()git 
+            delivery_choices = DELIVERY_CHOICES.choices()
             delivery_choices = [{'id': shop[0], 'choice': shop[1]} for shop in delivery_choices]
             return self.success_response(code='HTTP_200_OK',
                                          data={'shopcategories': shop_choices,
