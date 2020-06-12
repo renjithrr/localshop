@@ -125,10 +125,16 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
                 token, _ = Token.objects.get_or_create(user=user)
                 user.is_active = True
                 user.save()
+                try:
+                    UserPaymentMethod.objects.get(user=user)
+                    is_profile_completed = True
+                except UserPaymentMethod.DoesNotExist:
+                    is_profile_completed = False
                 return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
                                              data={'user_id': user.id,
                                                    'user_type': user.role,
-                                                   'token': token.key
+                                                   'token': token.key,
+                                                   'is_profile_completed': is_profile_completed
                                                    })
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=INVALID_OTP)
@@ -249,6 +255,27 @@ class CommonParamsView(APIView, ResponseViewMixin):
                                          data={'shopcategories': shop_choices,
                                                'delivery_choices': delivery_choices,
                                                'payment_methods': payment_methods
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class ProfileCompleteView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            token_string = request.META.get('HTTP_AUTHORIZATION')
+            token_key = token_string.partition(' ')[2]
+            token = Token.objects.get(key=token_key)
+            try:
+                UserPaymentMethod.objects.get(user=token.user)
+                is_profile_completed = True
+            except UserPaymentMethod.DoesNotExist:
+                is_profile_completed = False
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'is_profile_completed': is_profile_completed
                                                },
                                          message=SUCCESS)
         except Exception as e:
