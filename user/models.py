@@ -95,7 +95,10 @@ class Shop(AuditedModel, models.Model):
     closing = models.TimeField(blank=True, null=True)
     delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
     self_delivery_charge = models.FloatField(blank=True, null=True)
+    delivery_radius = models.FloatField(blank=True, null=True)
     bulk_delivery_charge = models.FloatField(blank=True, null=True)
+    within_km = models.FloatField(blank=True, null=True)
+    extra_charge_per_km = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return self.shop_name
