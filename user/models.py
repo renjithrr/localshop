@@ -47,9 +47,9 @@ class AppUser(AbstractUser):
 
 
 class AuditedModel(models.Model):
-    created_by = models.ForeignKey(AppUser, related_name='+', on_delete=models.CASCADE)
+    created_by = models.ForeignKey(AppUser, related_name='+', on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    modified_by = models.ForeignKey(AppUser, related_name='+', on_delete=models.CASCADE)
+    modified_by = models.ForeignKey(AppUser, related_name='+', on_delete=models.CASCADE, blank=True, null=True)
     modified_at = models.DateTimeField(auto_now=True)
 
     class Meta:

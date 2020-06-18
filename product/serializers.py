@@ -6,7 +6,9 @@ class ProductSerializer(serializers.ModelSerializer):
     color = serializers.ListField()
     class Meta:
         model = Product
-        fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand']
+        fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand', 'product_id', 'mrp',
+                  'offer_prize', 'lowest_selling_rate', 'highest_selling_rate',
+                  'hsn_code', 'tax_rate', 'moq', 'unit']
 
 
 class ProductPricingSerializer(serializers.ModelSerializer):
@@ -18,6 +20,7 @@ class ProductPricingSerializer(serializers.ModelSerializer):
 
     def get_id(self, obj):
         return obj.id
+
 
 class ProductListingSerializer(serializers.ModelSerializer):
     class Meta:

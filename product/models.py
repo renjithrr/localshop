@@ -10,19 +10,19 @@ CHOICES = Konstants(
 )
 
 UNIT_CHOICES = Konstants(
-    Kw(number=1, label='Number'),
-    Kw(kg=2, label='KG'),
-    Kw(litre=3, label='Litre'),
+    Kw(number='number', label='Number'),
+    Kw(kg='kg', label='KG'),
+    Kw(litre='litre', label='Litre'),
 )
 
 COLOR_CHOICES = Konstants(
-    Kw(v=1, label='Violet'),
-    Kw(i=2, label='Indigo'),
-    Kw(b=3, label='Blue'),
-    Kw(g=4, label='Green'),
-    Kw(y=5, label='Yellow'),
-    Kw(o=6, label='Orange'),
-    Kw(r=7, label='Red'),
+    Kw(v='violet', label='Violet'),
+    Kw(i='indigo', label='Indigo'),
+    Kw(b='blue', label='Blue'),
+    Kw(g='green', label='Green'),
+    Kw(y='yellow', label='Yellow'),
+    Kw(o='orange', label='Orange'),
+    Kw(r='red', label='Red'),
 )
 
 
@@ -46,7 +46,8 @@ class Category(models.Model):
 class Product(AuditedModel, models.Model):
     name = models.CharField(max_length=255)
     product_id = models.CharField(max_length=10, blank=True, null=True)
-    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
+    brand = models.CharField(max_length=30, blank=True, null=True)
+    # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     size = models.CharField(max_length=20, blank=True, null=True)
     color = MultiSelectField(choices=COLOR_CHOICES.choices())
@@ -60,7 +61,7 @@ class Product(AuditedModel, models.Model):
     hsn_code = models.CharField(max_length=10, blank=True, null=True)
     tax_rate = models.CharField(max_length=10, blank=True, null=True)
     moq = models.IntegerField(blank=True, null=True)
-    unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES.choices(), blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
 
@@ -72,7 +73,8 @@ class Product(AuditedModel, models.Model):
 class ProductVarient(AuditedModel, models.Model):
     product = models.ForeignKey(Product, related_name='product_varients', on_delete=models.CASCADE)
     size = models.CharField(max_length=20, blank=True, null=True)
-    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
+    brand = models.CharField(max_length=30, blank=True, null=True)
+    # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     color = MultiSelectField(choices=COLOR_CHOICES.choices())
     quantity = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
