@@ -2,7 +2,7 @@ from django.db import models
 from utilities.utils import Kw, Konstants
 from localshop.settings.storage_backends import PublicMediaStorage
 from multiselectfield import MultiSelectField
-from user.models import AuditedModel
+from user.models import AuditedModel, PAYMENT_CHOICES
 
 CHOICES = Konstants(
     Kw(available=1, label='Available'),
@@ -15,6 +15,13 @@ UNIT_CHOICES = Konstants(
     Kw(litre='litre', label='Litre'),
 )
 
+ORDER_STATUS = Konstants(
+    Kw(pending=1, label='Pending'),
+    Kw(accepted=2, label='Accepted'),
+    Kw(rejected=3, label='Rejected'),
+    Kw(completed=4, label='Completed'),
+)
+
 COLOR_CHOICES = Konstants(
     Kw(v='violet', label='Violet'),
     Kw(i='indigo', label='Indigo'),
@@ -25,6 +32,12 @@ COLOR_CHOICES = Konstants(
     Kw(r='red', label='Red'),
 )
 
+
+PAYMENT_STATUS = Konstants(
+    Kw(pending=1, label='Pending'),
+    Kw(completed=2, label='Completed'),
+    Kw(failed=3, label='Failed'),
+)
 
 
 class Brand(models.Model):
@@ -93,25 +106,31 @@ class ProductVarientImage(models.Model):
     varient = models.ForeignKey(ProductVarient, on_delete=models.CASCADE)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
-# class Order(models.Model):
-#     date = models.DateTimeField(auto_now_add=True)
-#     sub_total = models.FloatField(max_length=100)
-#     vat = models.FloatField(max_length=100)
-#     total_amount = models.FloatField(max_length=100)
-#     discount = models.FloatField(max_length=100)
-#     grand_total = models.FloatField(max_length=100)
-#     paid = models.FloatField(max_length=100)
-#     due = models.FloatField(max_length=100)
-#     payment_type = models.CharField(max_length=100)
-#     payment_status = models.IntegerField()
-#     status = models.IntegerField()
-#
-#
-# class OrderItem(models.Model):
-#     order_id = models.ForeignKey(Order, on_delete=models.CASCADE)
-#     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
-#
-#     quantity = models.IntegerField()
-#     rate = models.FloatField(max_length=100)
-#     total = models.FloatField(max_length=100)
-#     status = models.IntegerField()
+
+class Order(AuditedModel, models.Model):
+    sub_total = models.FloatField(max_length=100, blank=True, null=True)
+    vat = models.FloatField(max_length=100, blank=True, null=True)
+    total_amount = models.FloatField(max_length=100, blank=True, null=True)
+    discount = models.FloatField(max_length=100, blank=True, null=True)
+    grand_total = models.FloatField(max_length=100, blank=True, null=True)
+    paid = models.FloatField(max_length=100, blank=True, null=True)
+    due = models.FloatField(max_length=100, blank=True, null=True)
+    payment_type = models.IntegerField(choices=PAYMENT_CHOICES.choices(), blank=True, null=True)
+    payment_status = models.IntegerField(choices=PAYMENT_STATUS.choices(), blank=True, null=True)
+    status = models.IntegerField(choices=ORDER_STATUS.choices(), blank=True, null=True)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class OrderItem(AuditedModel, models.Model):
+    order_id = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    quantity = models.IntegerField(blank=True, null=True)
+    rate = models.FloatField(max_length=100, blank=True, null=True)
+    total = models.FloatField(max_length=100, blank=True, null=True)
+    # status = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.product_id)

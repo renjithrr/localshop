@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 from django import forms
 
 
-from product.models import Product, Category, Brand, ProductVarient
+from product.models import Product, Category, Brand, ProductVarient, Order, OrderItem
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -58,7 +58,18 @@ class BrandAdmin(admin.ModelAdmin):
 class ProductVarientAdmin(admin.ModelAdmin):
     list_display = ('product', 'brand', 'size', 'mrp', 'tax_rate')
 
+
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('total_amount', 'discount', 'payment_status', 'status')
+
+
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order_id', 'product_id', 'quantity', 'rate', 'total')
+
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(ProductVarient, ProductVarientAdmin)
+admin.site.register(Order, OrderAdmin)
+admin.site.register(OrderItem, OrderItemAdmin)

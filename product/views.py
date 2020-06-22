@@ -1,8 +1,10 @@
 import logging
 import io
 import csv
+from datetime import date, timedelta, datetime
 from django.contrib.auth import authenticate
 from django.forms import modelformset_factory
+from django.db.models import Sum
 
 from rest_framework.views import APIView
 from rest_framework. viewsets import GenericViewSet
@@ -15,8 +17,9 @@ from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
 from utilities.utils import BulkCreateManager
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
-    ProductVarientSerializer
-from product.models import Product, ProductVarientImage, ProductVarient, Category, UNIT_CHOICES, COLOR_CHOICES
+    ProductVarientSerializer, OrderSerializer
+from product.models import Product, ProductVarientImage, ProductVarient, Category, UNIT_CHOICES, COLOR_CHOICES,\
+    OrderItem, Order, ORDER_STATUS, PAYMENT_STATUS
 from product.forms import VarientImageForm
 
 
@@ -179,4 +182,34 @@ class ProductParamsvView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class SalesView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                                               created_at__date=date.today()).aggregate(Sum('grand_total'))
+            yesterday = date.today() - timedelta(days=1)
+            last_7_days = date.today() - timedelta(days=7)
+            last_7_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                                               created_at__date__range=(last_7_days, yesterday)).aggregate(Sum('grand_total'))
+            last_31_days = date.today() - timedelta(days=31)
+            last_31_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                                                created_at__date__range=(last_31_days, yesterday)).aggregate(Sum('grand_total'))
+            pending_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.pending)
+            pending_order_serializer = OrderSerializer(pending_orders, many=True)
+            accepted_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.accepted)
+            accepted_order_serializer = OrderSerializer(accepted_orders, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'todays_sale': todays_sale['grand_total__sum'],
+                                               'last_7_days': last_7_days['grand_total__sum'],
+                                               'last_31_days': last_31_days['grand_total__sum'],
+                                               'pending_orders': pending_order_serializer.data,
+                                               'accepted_orders': accepted_order_serializer.data},
+                                         message=SUCCESS)
+        except Exception as e:
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

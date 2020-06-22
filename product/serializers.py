@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from product.models import Product, ProductVarient
+from product.models import Product, ProductVarient, Order, OrderItem
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -35,3 +35,13 @@ class ProductVarientSerializer(serializers.ModelSerializer):
         fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',
                   'lowest_selling_rate', 'highest_selling_rate', 'tax_rate', 'moq', 'unit']
 
+
+class OrderSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField('get_product_name')
+
+    class Meta:
+        model = OrderItem
+        fields = ['order_id', 'product_name', 'quantity', 'total']
+
+    def get_product_name(self, obj):
+        return obj.product_id.name
