@@ -186,7 +186,7 @@ class ProductParamsvView(APIView, ResponseViewMixin):
 
 
 class SalesView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
