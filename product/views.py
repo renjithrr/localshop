@@ -1,6 +1,7 @@
 import logging
 import io
 import csv
+import json
 from datetime import date, timedelta, datetime
 from django.contrib.auth import authenticate
 from django.forms import modelformset_factory
@@ -88,9 +89,21 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
             paginted_products = self.paginate_queryset(products)
             product_Serializer = ProductListingSerializer(paginted_products, many=True)
             response = product_Serializer.data
-            return self.get_paginated_response(response)
+            return self.success_response(code='HTTP_200_OK',
+                                         data=self.get_paginated_response(response).data,
+                                         message=SUCCESS)
         except Exception as e:
             print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+    def retrieve(self, request, pk=None):
+        try:
+            product = Product.objects.get(id=pk)
+            serializer = ProductSerializer(product)
+            return self.success_response(code='HTTP_200_OK',
+                                         data=serializer.data,
+                                         message=SUCCESS)
+        except Product.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -104,9 +117,10 @@ class ProductVarientView(APIView, ResponseViewMixin):
             try:
                 varient = ProductVarient.objects.get(product=product_id, size=request.data.get('size'),
                                                      brand=request.data.get('brand'), mrp=request.data.get('mrp'))
+                print(varient)
                 serializer = ProductVarientSerializer(instance=varient, data=request.data)
             except ProductVarient.DoesNotExist:
-
+                print("here")
                 serializer = ProductVarientSerializer(data=request.data)
             if serializer.is_valid():
                 varient = serializer.save()
@@ -122,6 +136,7 @@ class ProductVarientView(APIView, ResponseViewMixin):
                 #         photo = ProductVarientImage(varient=varient, image=image)
                 #         photo.save()
             else:
+                print(serializer.errors)
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
