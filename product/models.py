@@ -96,7 +96,7 @@ class ProductVarient(AuditedModel, models.Model):
     lowest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
     highest_selling_rate = models.FloatField(max_length=100, blank=True, null=True)
     moq = models.IntegerField(blank=True, null=True)
-    unit = models.IntegerField(choices=UNIT_CHOICES.choices(), blank=True, null=True)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES.choices(), blank=True, null=True)
     tax_rate = models.CharField(max_length=10, blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
