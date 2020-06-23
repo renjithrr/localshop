@@ -73,7 +73,7 @@ class ProductView(APIView, ResponseViewMixin):
 
 
 class  ProductListingView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductListingSerializer
     pagination_class = CustomOffsetPagination
     test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
