@@ -2,7 +2,7 @@ from django.db import models
 from utilities.utils import Kw, Konstants
 from localshop.settings.storage_backends import PublicMediaStorage
 from multiselectfield import MultiSelectField
-from user.models import AuditedModel, PAYMENT_CHOICES
+from user.models import AuditedModel, PAYMENT_CHOICES, Shop
 
 CHOICES = Konstants(
     Kw(available=1, label='Available'),
@@ -118,6 +118,7 @@ class Order(AuditedModel, models.Model):
     payment_type = models.IntegerField(choices=PAYMENT_CHOICES.choices(), blank=True, null=True)
     payment_status = models.IntegerField(choices=PAYMENT_STATUS.choices(), blank=True, null=True)
     status = models.IntegerField(choices=ORDER_STATUS.choices(), blank=True, null=True)
+    shop = models.ForeignKey(Shop, related_name='shop_orders', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return str(self.id)

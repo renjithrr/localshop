@@ -22,6 +22,8 @@ from product.serializers import ProductSerializer, ProductPricingSerializer, Pro
 from product.models import Product, ProductVarientImage, ProductVarient, Category, UNIT_CHOICES, COLOR_CHOICES,\
     OrderItem, Order, ORDER_STATUS, PAYMENT_STATUS
 from product.forms import VarientImageForm
+from user.models import Shop
+from user.serializers import ProfileSerializer
 
 
 class ProductView(APIView, ResponseViewMixin):
@@ -214,16 +216,75 @@ class SalesView(APIView, ResponseViewMixin):
             last_31_days = date.today() - timedelta(days=31)
             last_31_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
                                                 created_at__date__range=(last_31_days, yesterday)).aggregate(Sum('grand_total'))
-            pending_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.pending)
-            pending_order_serializer = OrderSerializer(pending_orders, many=True)
-            accepted_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.accepted)
-            accepted_order_serializer = OrderSerializer(accepted_orders, many=True)
+            # pending_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.pending)
+            # pending_order_serializer = OrderSerializer(pending_orders, many=True)
+            # accepted_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.accepted)
+            # accepted_order_serializer = OrderSerializer(accepted_orders, many=True)
+            try:
+                shop = Shop.objects.get(id=request.GET.get('shop_id'))
+                serializer = ProfileSerializer(shop)
+                profile_info = serializer.data
+            except Exception as e:
+                profile_info = ''
             return self.success_response(code='HTTP_200_OK',
                                          data={'todays_sale': todays_sale['grand_total__sum'],
                                                'last_7_days': last_7_days['grand_total__sum'],
                                                'last_31_days': last_31_days['grand_total__sum'],
-                                               'pending_orders': pending_order_serializer.data,
-                                               'accepted_orders': accepted_order_serializer.data},
+                                               # 'pending_orders': pending_order_serializer.data,
+                                               # 'accepted_orders': accepted_order_serializer.data
+                                               'profile_info': profile_info
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+
+class  PendingOrderView(GenericViewSet, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProductListingSerializer
+    pagination_class = CustomOffsetPagination
+    # test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
+    #                                type=openapi.TYPE_STRING)
+    #
+    # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    def list(self, request, *args, **kwargs):
+        try:
+            pending_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.pending)
+            # if 'search' in request.GET:
+            #    search_term = request.GET.get('search')
+            #    products = products.filter(name__icontains=search_term)
+            pending_orders = self.paginate_queryset(pending_orders)
+            order_Serializer = OrderSerializer(pending_orders, many=True)
+            response = order_Serializer.data
+            return self.success_response(code='HTTP_200_OK',
+                                         data=self.get_paginated_response(response).data,
+                                         message=SUCCESS)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProductListingSerializer
+    pagination_class = CustomOffsetPagination
+    # test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
+    #                                type=openapi.TYPE_STRING)
+    #
+    # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    def list(self, request, *args, **kwargs):
+        try:
+            accepted_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.accepted)
+            # if 'search' in request.GET:
+            #    search_term = request.GET.get('search')
+            #    products = products.filter(name__icontains=search_term)
+            accepted_orders = self.paginate_queryset(accepted_orders)
+            order_Serializer = OrderSerializer(accepted_orders, many=True)
+            response = order_Serializer.data
+            return self.success_response(code='HTTP_200_OK',
+                                         data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
             print(e)

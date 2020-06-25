@@ -21,3 +21,10 @@ class ShopLocationDataSerializer(serializers.ModelSerializer):
         model = Shop
         fields = ['address', 'pincode', 'lat', 'long', 'delivery_type', 'self_delivery_charge', 'delivery_radius',
                   'bulk_delivery_charge', 'within_km', 'extra_charge_per_km']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Shop
+        fields = ['shop_name', 'gst_reg_number', 'opening', 'closing', 'image']

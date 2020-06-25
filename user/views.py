@@ -16,7 +16,7 @@ from utilities.utils import OTPgenerator
 from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod
 
-from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer
+from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer
 
 
 # class DeviceTokenView(APIView, ResponseViewMixin):
@@ -278,6 +278,45 @@ class ProfileCompleteView(APIView, ResponseViewMixin):
                                          data={'is_profile_completed': is_profile_completed
                                                },
                                          message=SUCCESS)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+
+class UserProfleView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+    test_param = openapi.Parameter('user_id', openapi.IN_QUERY, description="User ID",
+                                   type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(tags=['user'], manual_parameters=[test_param])
+    def get(self, request):
+        try:
+            user = Shop.objects.get(user=request.GET.get('user_id'))
+            serializer = ProfileSerializer(user)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'profile_info': serializer.data
+                                               },
+                                         message=SUCCESS)
+
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'user_id': openapi.Schema(type=openapi.TYPE_STRING),
+            'image': openapi.Schema(type=openapi.TYPE_FILE),
+        }))
+    def post(self, request):
+        try:
+            shop = Shop.objects.get(user=request.data.get('user_id'))
+            shop.image = request.FILES.get('image')
+            shop.save()
+            return self.success_response(code='HTTP_200_OK',
+                                         message=SUCCESS)
+
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

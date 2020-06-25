@@ -11,5 +11,6 @@ urlpatterns = [
     path('common-params/', CommonParamsView.as_view()),
     path('payment-methods/', PaymentMethodView.as_view()),
     path('is-profile-completed/', ProfileCompleteView.as_view()),
+    path('profile/', UserProfleView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]

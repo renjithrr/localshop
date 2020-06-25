@@ -99,6 +99,7 @@ class Shop(AuditedModel, models.Model):
     bulk_delivery_charge = models.FloatField(blank=True, null=True)
     within_km = models.FloatField(blank=True, null=True)
     extra_charge_per_km = models.FloatField(blank=True, null=True)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
     def __str__(self):
         return self.shop_name

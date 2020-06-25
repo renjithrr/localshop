@@ -17,6 +17,7 @@ urlpatterns = [
     path('upload-product-csv', ProductDataCsvView.as_view()),
     path('product-params', ProductParamsvView.as_view()),
     path('sales-page', SalesView.as_view()),
-
+    path('pending-orders', PendingOrderView.as_view({'get': 'list'})),
+    path('accepted-orders', AcceptedOrderView.as_view({'get': 'list'})),
 ]
 urlpatterns += router.urls

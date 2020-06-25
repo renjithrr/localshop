@@ -60,7 +60,7 @@ class ProductVarientAdmin(admin.ModelAdmin):
 
 
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('total_amount', 'discount', 'payment_status', 'status')
+    list_display = ('total_amount', 'discount', 'payment_status', 'status', 'shop')
 
 
 class OrderItemAdmin(admin.ModelAdmin):
