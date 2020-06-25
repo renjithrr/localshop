@@ -204,7 +204,10 @@ class ProductParamsvView(APIView, ResponseViewMixin):
 
 class SalesView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
+    test_param = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
+                                   type=openapi.TYPE_STRING)
 
+    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def get(self, request):
         try:
             todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
