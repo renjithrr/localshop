@@ -269,10 +269,10 @@ class ProfileCompleteView(APIView, ResponseViewMixin):
             token_string = request.META.get('HTTP_AUTHORIZATION')
             token_key = token_string.partition(' ')[2]
             token = Token.objects.get(key=token_key)
-            try:
-                UserPaymentMethod.objects.get(user=token.user)
+            user_payment = UserPaymentMethod.objects.filter(user=token.user)
+            if user_payment:
                 is_profile_completed = True
-            except UserPaymentMethod.DoesNotExist:
+            else:
                 is_profile_completed = False
             return self.success_response(code='HTTP_200_OK',
                                          data={'is_profile_completed': is_profile_completed
