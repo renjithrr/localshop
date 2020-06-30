@@ -1,5 +1,6 @@
 from django.contrib import admin
-from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory, PaymentMethod, UserPaymentMethod
+from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory, PaymentMethod, UserPaymentMethod, \
+    DeliveryVehicle, DeliveryOption
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -31,6 +32,14 @@ class UserPaymentMethodAdmin(admin.ModelAdmin):
     list_display = ('user', 'payment_method')
 
 
+class DeliveryVehicleAdmin(admin.ModelAdmin):
+    list_display = ('delivery_option', 'vehicle_and_capacity', 'min_charge', 'within_km', 'extra_charge_per_km')
+
+
+class DeliveryOptionAdmin(admin.ModelAdmin):
+    list_display = ('shop', 'delivery_type', 'delivery_charge', 'delivery_charge')
+
+
 admin.site.register(AppUser, UserAdmin)
 admin.site.register(DeviceToken, DeviceTokenAdmin)
 admin.site.register(Shop, ShopAdmin)
@@ -38,3 +47,5 @@ admin.site.register(AppConfigData, AppConfigDataAdmin)
 admin.site.register(ShopCategory, ShopCategoryAdmin)
 admin.site.register(PaymentMethod, PaymentMethodAdmin)
 admin.site.register(UserPaymentMethod, UserPaymentMethodAdmin)
+admin.site.register(DeliveryVehicle, DeliveryVehicleAdmin)
+admin.site.register(DeliveryOption, DeliveryOptionAdmin)

@@ -14,9 +14,10 @@ from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR
 from utilities.utils import OTPgenerator
 
 from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
-    PaymentMethod, UserPaymentMethod
+    PaymentMethod, UserPaymentMethod, DeliveryOption, DeliveryVehicle
 
-from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer
+from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
+    DeliveryDetailSerializer, VehicleDetailSerializer
 
 
 # class DeviceTokenView(APIView, ResponseViewMixin):
@@ -219,6 +220,45 @@ class LocationDataView(APIView, ResponseViewMixin):
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
+
+class DeliveryOptionView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'shop': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'delivery_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
+            'delivery_radius': openapi.Schema(type=openapi.TYPE_STRING),
+            'delivery_charge': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'vehicle_and_capacity': openapi.Schema(type=openapi.TYPE_STRING),
+            'within_km': openapi.Schema(type=openapi.TYPE_STRING),
+            'min_charge': openapi.Schema(type=openapi.TYPE_STRING),
+            'extra_charge_per_km': openapi.Schema(type=openapi.TYPE_STRING),
+        }))
+    def post(self, request):
+        try:
+            try:
+                delivery = DeliveryOption.objects.get(shop=request.data.get('shop'))
+                serializer = DeliveryDetailSerializer(instance=delivery, data=request.data)
+            except DeliveryOption.DoesNotExist:
+                serializer = DeliveryDetailSerializer(data=request.data)
+            if serializer.is_valid():
+                delivery = serializer.save()
+                delivery.save()
+                request.data['delivery_option'] = delivery.id
+                vehicle_details = VehicleDetailSerializer(data=request.data)
+                vehicle_details.save()
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'delivery_id': delivery.id},
+                                         message=DATA_SAVED_SUCCESSFULLY)
+        except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
 class PaymentMethodView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 
@@ -247,7 +287,7 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            shop_choices = [{'id': shop.id, 'category': shop.name} for shop in ShopCategory.objects.all()]
+            shop_choices = [{'id': shop.id, 'category': shop.name, 'fssai': shop.fssai} for shop in ShopCategory.objects.all()]
             payment_methods = [{'id': method.id, 'method': method.payment_type} for method in PaymentMethod.objects.all()]
             delivery_choices = DELIVERY_CHOICES.choices()
             delivery_choices = [{'id': shop[0], 'choice': shop[1]} for shop in delivery_choices]
@@ -315,6 +355,7 @@ class UserProfleView(APIView, ResponseViewMixin):
             shop.image = request.FILES.get('image')
             shop.save()
             return self.success_response(code='HTTP_200_OK',
+                                         data={'image_url': shop.image.url},
                                          message=SUCCESS)
 
         except Exception as e:

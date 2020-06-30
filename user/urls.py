@@ -12,5 +12,6 @@ urlpatterns = [
     path('payment-methods/', PaymentMethodView.as_view()),
     path('is-profile-completed/', ProfileCompleteView.as_view()),
     path('profile/', UserProfleView.as_view()),
+    path('delivery-option/', DeliveryOptionView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]

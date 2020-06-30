@@ -19,17 +19,8 @@ ORDER_STATUS = Konstants(
     Kw(pending=1, label='Pending'),
     Kw(accepted=2, label='Accepted'),
     Kw(rejected=3, label='Rejected'),
-    Kw(completed=4, label='Completed'),
-)
-
-COLOR_CHOICES = Konstants(
-    Kw(v='violet', label='Violet'),
-    Kw(i='indigo', label='Indigo'),
-    Kw(b='blue', label='Blue'),
-    Kw(g='green', label='Green'),
-    Kw(y='yellow', label='Yellow'),
-    Kw(o='orange', label='Orange'),
-    Kw(r='red', label='Red'),
+    Kw(ready_for_pickup=4, label='Ready for pickup'),
+    Kw(delivered=5, label='Delivered'),
 )
 
 
@@ -52,6 +43,7 @@ class Category(models.Model):
     name = models.CharField(max_length=255)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
 
+
     def __str__(self):
         return self.name
 
@@ -63,7 +55,7 @@ class Product(AuditedModel, models.Model):
     # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     size = models.CharField(max_length=20, blank=True, null=True)
-    color = MultiSelectField(choices=COLOR_CHOICES.choices())
+    color = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
@@ -77,6 +69,8 @@ class Product(AuditedModel, models.Model):
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES.choices(), blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
+    is_deleted = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)
 
 
     def __str__(self):
@@ -88,7 +82,7 @@ class ProductVarient(AuditedModel, models.Model):
     size = models.CharField(max_length=20, blank=True, null=True)
     brand = models.CharField(max_length=30, blank=True, null=True)
     # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
-    color = MultiSelectField(choices=COLOR_CHOICES.choices())
+    color = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     mrp = models.FloatField(max_length=100)
@@ -100,6 +94,8 @@ class ProductVarient(AuditedModel, models.Model):
     tax_rate = models.CharField(max_length=10, blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
+    is_deleted = models.BooleanField(default=False)
+    is_hidden= models.BooleanField(default=False)
 
 
 class ProductVarientImage(models.Model):
