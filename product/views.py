@@ -333,7 +333,7 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            accepted_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.accepted)
+            accepted_orders = Order.objects.filter(status=ORDER_STATUS.accepted)
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
