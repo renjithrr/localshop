@@ -251,7 +251,7 @@ class SalesView(APIView, ResponseViewMixin):
     def get(self, request):
         try:
             try:
-                shop = Shop.objects.get(user=request.GET.get('user_id'))
+                shop = Shop.objects.filter(user=request.GET.get('user_id')).last()
                 serializer = ProfileSerializer(shop)
                 profile_info = serializer.data
                 todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
