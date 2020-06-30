@@ -82,6 +82,9 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
     test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
                                    type=openapi.TYPE_STRING)
 
+    def get_queryset(self):
+        pass
+    
     @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
@@ -115,6 +118,9 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
 class ProductVarientView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductVarientSerializer
+
+    def get_queryset(self):
+        pass
 
     @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
     def create(self, request):
@@ -292,6 +298,9 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductListingSerializer
     pagination_class = CustomOffsetPagination
+
+    def get_queryset(self):
+        pass
     # test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
     #                                type=openapi.TYPE_STRING)
     #
@@ -311,7 +320,6 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-
 
     def retrieve(self, request, pk=None):
         try:
@@ -371,23 +379,46 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
-# class  OrderPickUpView(APIView, ResponseViewMixin):
-#     permission_classes = [AllowAny]
-#
-#     @swagger_auto_schema(tags=['product'], request_body=openapi.Schema(
-#         type=openapi.TYPE_OBJECT,
-#         properties={
-#             'order_id': openapi.Schema(type=openapi.TYPE_STRING),
-#             'status': openapi.Schema(type=openapi.TYPE_INTEGER),
-#         }))
-#     def post(self, request, *args, **kwargs):
-#         try:
-#             order = Order.objects.get(id=request.data.get('order_id'))
-#             status = request.data.get('status')
-#             order.status = status
-#             order.save()
-#             return self.success_response(code='HTTP_200_OK',
-#                                          message=SUCCESS)
-#         except Exception as e:
-#             print(e)
-#             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+class  ProductPricingView(GenericViewSet, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProductPricingSerializer
+
+    def get_queryset(self):
+        pass
+
+    @swagger_auto_schema(tags=['product'], request_body=ProductPricingSerializer)
+    def create(self, request, *args, **kwargs):
+        try:
+            product = Product.objects.get(id=request.data.get('product_id'))
+            serializer = ProductPricingSerializer(instance=product, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return self.success_response(code='HTTP_200_OK',
+                                             message=SUCCESS)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+    def retrieve(self, request, pk=None):
+        try:
+            product = Product.objects.get(id=pk)
+            serializer = ProductPricingSerializer(product)
+            return self.success_response(code='HTTP_200_OK',
+                                         data=serializer.data,
+                                         message=SUCCESS)
+        except Product.DoesNotExist:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+    @swagger_auto_schema(tags=['product'], request_body=ProductPricingSerializer)
+    def update(self, request, pk=None):
+        try:
+            product = Product.objects.get(id=pk)
+            serializer = ProductPricingSerializer(instance=product, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return self.success_response(code='HTTP_200_OK',
+                                             data=serializer.data,
+                                             message=SUCCESS)
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

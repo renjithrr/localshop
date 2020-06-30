@@ -5,9 +5,11 @@ router = DefaultRouter()
 router.register(r'listing', ProductListingView, basename='product')
 router.register(r'pending-orders', PendingOrderView, basename='pending-orders')
 router.register(r'varient', ProductVarientView, basename='pending-orders')
+router.register(r'pricing', ProductPricingView, basename='product-pricing')
 
 product_list = ProductListingView.as_view({'get': 'list'})
 product_detail = ProductListingView.as_view({'get': 'retrieve'})
+product_update = ProductListingView.as_view({'put': 'update'})
 
 pending_order_list = PendingOrderView.as_view({'get': 'list'})
 pending_order_detail = PendingOrderView.as_view({'get': 'retrieve'})
@@ -15,6 +17,10 @@ pending_order_detail = PendingOrderView.as_view({'get': 'retrieve'})
 product_varient_create = ProductVarientView.as_view({'post': 'create'})
 product_varient_update = ProductVarientView.as_view({'put': 'update'})
 
+
+product_pricing_create = ProductPricingView.as_view({'post': 'create'})
+product_pricing_retrieve = ProductPricingView.as_view({'put': 'update'})
+product_pricing_update = ProductPricingView.as_view({'put': 'update'})
 
 urlpatterns = [
     path('', ProductView.as_view()),

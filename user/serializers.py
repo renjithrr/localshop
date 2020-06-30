@@ -36,6 +36,20 @@ class VehicleDetailSerializer(serializers.ModelSerializer):
         fields = ['delivery_option', 'vehicle_and_capacity', 'min_charge','within_km', 'extra_charge_per_km']
 
 
+class DeliveryRetrieveSerializer(serializers.ModelSerializer):
+    vehicle_Details = serializers.SerializerMethodField('get_order_items')
+
+    class Meta:
+        model = DeliveryOption
+        fields = ['delivery_type', 'delivery_charge', 'delivery_radius','shop', 'vehicle_Details']
+
+    def get_order_items(self, obj):
+        vehicles = obj.delivery_option_vehicle.all()
+        return [{'vehicle_and_capacity': vehicle.vehicle_and_capacity, 'min_charge': vehicle.min_charge,
+                 'within_km': vehicle.within_km, 'extra_charge_per_km': vehicle.extra_charge_per_km}
+                for vehicle in vehicles]
+
+
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:

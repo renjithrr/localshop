@@ -114,6 +114,8 @@ class DeliveryOption(AuditedModel, models.Model):
     delivery_charge = models.FloatField(blank=True, null=True)
     delivery_radius = models.FloatField(blank=True, null=True)
 
+    def __str__(self):
+        return self.shop.shop_name
 
 class DeliveryVehicle(AuditedModel, models.Model):
     delivery_option = models.ForeignKey(DeliveryOption, related_name='delivery_option_vehicle',
