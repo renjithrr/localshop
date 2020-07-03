@@ -81,11 +81,17 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
     pagination_class = CustomOffsetPagination
     test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
                                    type=openapi.TYPE_STRING)
+    test_param1 = openapi.Parameter('all', openapi.IN_QUERY, description="List all products",
+                                    type=openapi.TYPE_STRING)
+    test_param2 = openapi.Parameter('hidden', openapi.IN_QUERY, description="list hidden",
+                                    type=openapi.TYPE_STRING)
+    test_param3 = openapi.Parameter('out_of_stock', openapi.IN_QUERY, description="List all out of stock products",
+                                    type=openapi.TYPE_STRING)
 
     def get_queryset(self):
         pass
     
-    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param, test_param1, test_param2, test_param3])
     def list(self, request, *args, **kwargs):
         try:
             products = Product.objects.filter(is_deleted=False).order_by('quantity')
@@ -93,7 +99,9 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
                search_term = request.GET.get('search')
                products = products.filter(name__icontains=search_term)
             if 'hidden' in request.GET:
-                products = products.objects.filter(is_hidden=True)
+                products = products.filter(is_hidden=True)
+            if 'out_of_stock' in request.GET:
+                products = products.filter(quantity=0)
             paginted_products = self.paginate_queryset(products)
             product_Serializer = ProductListingSerializer(paginted_products, many=True)
             response = product_Serializer.data
@@ -211,10 +219,17 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
             for row in csv.reader(io_string, delimiter=',', quotechar="|"):
                 # print(row[0])
                 category = Category.objects.filter(name__icontains=row[1]).last()
+                existing_product = Product.objects.filter(hsn_code=row[11])
+                if existing_product:
+                    update_values = {'name': row[0], 'category': category, 'size': row[2], 'color': row[3],
+                                     'quantity': row[4], 'description': row[5], 'brand': row[6], 'mrp': row[7],
+                                     'offer_prize': row[8], 'lowest_selling_rate': row[9],
+                                     'highest_selling_rate': row[10], 'tax_rate': row[12], 'moq': row[13],
+                                     'unit': row[14]
+                                     }
+                    existing_product.update(**update_values)
 
-                try:
-                    Product.objects.get(hsn_code=row[11])
-                except Product.DoesNotExist:
+                else:
                     bulk_mgr.add(Product(name=row[0], category=category,
                                          size=row[2], color=row[3], quantity=row[4],description=row[5],
                                          brand=row[6], mrp=row[7], offer_prize=row[8], lowest_selling_rate=row[9],
