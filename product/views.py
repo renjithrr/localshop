@@ -205,7 +205,10 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
 class ProductDataCsvView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
+    test_param = openapi.Parameter('file', openapi.IN_QUERY, description="Upload CSV file for product update",
+                                   type=openapi.TYPE_FILE)
+
+    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def post(self, request):
         print(request.FILES)
         csv_file = request.FILES['file']
