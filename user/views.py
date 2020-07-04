@@ -213,10 +213,11 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
     def create(self, request):
         user_id = request.data.get('user')
         try:
-            try:
-                shop = Shop.objects.get(user=user_id)
+
+            shop = Shop.objects.filter(user=user_id).first()
+            if shop:
                 serializer = ShopDetailSerializer(instance=shop, data=request.data)
-            except Shop.DoesNotExist:
+            else:
                 serializer = ShopDetailSerializer(data=request.data)
             if serializer.is_valid():
                 shop = serializer.save()
