@@ -373,6 +373,15 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
+    def retrieve(self, request, pk=None):
+        try:
+            items = OrderItem.objects.filter(order_id=pk)
+            serializer = OrderDetailSerializer(items, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data=serializer.data,
+                                         message=SUCCESS)
+        except Product.DoesNotExist:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 class  OrderAcceptRejectView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
