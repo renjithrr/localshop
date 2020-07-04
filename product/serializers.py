@@ -87,5 +87,5 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         return [{'name': item.product_id.name, 'category': item.product_id.category.name, 'size': item.product_id.size,
                  'color': item.product_id.color, 'quantity': item.quantity, 'total': item.total,
                  'description': item.product_id.description, 'brand': item.product_id.brand,
-                 'product_id': item.product_id.product_id}
+                 'product_id': item.product_id.product_id, 'status': obj.status}
                 for item in OrderItem.objects.filter(order_id=obj)]
