@@ -179,12 +179,14 @@ EMAIL_PORT=1025
 #     }
 # }
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
-AWS_STORAGE_BUCKET_NAME = 'test'
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400'
 }
 AWS_LOCATION = 'static'
 AWS_DEFAULT_ACL = None
 PUBLIC_FILE_STORAGE = 'localshop.settings.storage_backends.PublicMediaStorage'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
