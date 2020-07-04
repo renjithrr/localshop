@@ -81,11 +81,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'items']
+        fields = ['id', 'items', 'status']
 
     def get_items(self, obj):
         return [{'name': item.product_id.name, 'category': item.product_id.category.name, 'size': item.product_id.size,
                  'color': item.product_id.color, 'quantity': item.quantity, 'total': item.total,
                  'description': item.product_id.description, 'brand': item.product_id.brand,
-                 'product_id': item.product_id.product_id, 'status': obj.status}
+                 'product_id': item.product_id.product_id}
                 for item in OrderItem.objects.filter(order_id=obj)]
