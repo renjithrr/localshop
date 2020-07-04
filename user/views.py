@@ -223,13 +223,13 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 # shop.gst_image = request.FILES['gst_image']
                 shop.save()
             else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
                                          data={'shop_id': shop.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
             logging.exception(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
     def retrieve(self, request, pk=None):
         try:
@@ -347,7 +347,7 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
             print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
     def retrieve(self, request, pk=None):
         try:
