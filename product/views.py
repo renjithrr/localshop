@@ -341,8 +341,8 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
 
     def retrieve(self, request, pk=None):
         try:
-            items = OrderItem.objects.filter(order_id=pk)
-            serializer = OrderDetailSerializer(items, many=True)
+            order = Order.objects.get(id=pk)
+            serializer = OrderDetailSerializer(order)
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
                                          message=SUCCESS)

@@ -113,6 +113,9 @@ class DeliveryOption(AuditedModel, models.Model):
     delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
     delivery_charge = models.FloatField(blank=True, null=True)
     delivery_radius = models.FloatField(blank=True, null=True)
+    free_delivery = models.BooleanField(default=False)
+    free_delivery_for = models.FloatField(blank=True, null=True)
+
 
     def __str__(self):
         return self.shop.shop_name

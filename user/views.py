@@ -323,10 +323,15 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
             'delivery_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
             'delivery_radius': openapi.Schema(type=openapi.TYPE_STRING),
             'delivery_charge': openapi.Schema(type=openapi.TYPE_NUMBER),
+            'delivery_vehicle': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
             'vehicle_and_capacity': openapi.Schema(type=openapi.TYPE_STRING),
             'within_km': openapi.Schema(type=openapi.TYPE_STRING),
             'min_charge': openapi.Schema(type=openapi.TYPE_STRING),
             'extra_charge_per_km': openapi.Schema(type=openapi.TYPE_STRING),
+
+            'free_delivery': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+            'free_delivery_for': openapi.Schema(type=openapi.TYPE_NUMBER),
+
         }))
     def create(self, request):
         try:
