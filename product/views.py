@@ -6,6 +6,7 @@ from datetime import date, timedelta, datetime
 from django.contrib.auth import authenticate
 from django.forms import modelformset_factory
 from django.db.models import Sum
+from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework. viewsets import GenericViewSet
@@ -359,7 +360,8 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            accepted_orders = Order.objects.filter(status=ORDER_STATUS.accepted)
+
+            accepted_orders = Order.objects.filter(Q(status=ORDER_STATUS.accepted) | Q(status=ORDER_STATUS.ready_for_pickup))
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)

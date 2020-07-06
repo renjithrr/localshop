@@ -310,7 +310,7 @@ class LocationDataView(GenericViewSet, ResponseViewMixin):
 
 
 class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = DeliveryDetailSerializer
 
     def get_queryset(self):
@@ -344,8 +344,9 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
                 delivery = serializer.save()
                 delivery.save()
                 request.data['delivery_option'] = delivery.id
-                vehicle_details = VehicleDetailSerializer(data=request.data)
-                vehicle_details.save()
+                vehicle_details = VehicleDetailSerializer(data=request.data.get('delivery_vehicle'), many=True)
+                if vehicle_details.is_valid():
+                    vehicle_details.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
