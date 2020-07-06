@@ -186,20 +186,20 @@ class AccountDetailsView(GenericViewSet, ResponseViewMixin):
         except AppUser.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    def update(self, request, pk=None):
-        try:
-            user = AppUser.objects.get(id=pk)
-            serializer = AccountSerializer(instance=user, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return self.success_response(code='HTTP_200_OK',
-                                             data=serializer.data,
-                                             message=SUCCESS)
-            else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-        except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
+    # def update(self, request, pk=None):
+    #     try:
+    #         user = AppUser.objects.get(id=pk)
+    #         serializer = AccountSerializer(instance=user, data=request.data)
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return self.success_response(code='HTTP_200_OK',
+    #                                          data=serializer.data,
+    #                                          message=SUCCESS)
+    #         else:
+    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+    #     except Exception as e:
+    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class ShopDetailsView(GenericViewSet, ResponseViewMixin):
@@ -242,20 +242,20 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    def update(self, request, pk=None):
-        try:
-            shop = Shop.objects.get(id=pk)
-            serializer = ShopDetailSerializer(instance=shop, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return self.success_response(code='HTTP_200_OK',
-                                             data=serializer.data,
-                                             message=SUCCESS)
-            else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-        except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
+    # def update(self, request, pk=None):
+    #     try:
+    #         shop = Shop.objects.get(id=pk)
+    #         serializer = ShopDetailSerializer(instance=shop, data=request.data)
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return self.success_response(code='HTTP_200_OK',
+    #                                          data=serializer.data,
+    #                                          message=SUCCESS)
+    #         else:
+    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+    #     except Exception as e:
+    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class LocationDataView(GenericViewSet, ResponseViewMixin):
@@ -293,20 +293,20 @@ class LocationDataView(GenericViewSet, ResponseViewMixin):
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    def update(self, request, pk=None):
-        try:
-            shop = Shop.objects.get(id=pk)
-            serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return self.success_response(code='HTTP_200_OK',
-                                             data=serializer.data,
-                                             message=SUCCESS)
-            else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-        except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
+    # def update(self, request, pk=None):
+    #     try:
+    #         shop = Shop.objects.get(id=pk)
+    #         serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return self.success_response(code='HTTP_200_OK',
+    #                                          data=serializer.data,
+    #                                          message=SUCCESS)
+    #         else:
+    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+    #     except Exception as e:
+    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
@@ -366,33 +366,33 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'shop': openapi.Schema(type=openapi.TYPE_INTEGER),
-            'delivery_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
-            'delivery_radius': openapi.Schema(type=openapi.TYPE_STRING),
-            'delivery_charge': openapi.Schema(type=openapi.TYPE_NUMBER),
-            'vehicle_and_capacity': openapi.Schema(type=openapi.TYPE_STRING),
-            'within_km': openapi.Schema(type=openapi.TYPE_STRING),
-            'min_charge': openapi.Schema(type=openapi.TYPE_STRING),
-            'extra_charge_per_km': openapi.Schema(type=openapi.TYPE_STRING),
-        }))
-    def update(self, request, pk=None):
-        try:
-            delivery = DeliveryOption.objects.get(shop=request.data.get('shop'))
-            serializer = DeliveryDetailSerializer(instance=delivery, data=request.data)
-            if serializer.is_valid():
-                delivery = serializer.save()
-                vehicle = DeliveryVehicle.objects.filter(delivery_option=delivery).first()
-                vehicle_details = VehicleDetailSerializer(instance=vehicle, data=request.data)
-                vehicle_details.save()
-                return self.success_response(code='HTTP_200_OK',
-                                             message=DATA_SAVED_SUCCESSFULLY)
-            else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
-        except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+    # @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'shop': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #         'delivery_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
+    #         'delivery_radius': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'delivery_charge': openapi.Schema(type=openapi.TYPE_NUMBER),
+    #         'vehicle_and_capacity': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'within_km': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'min_charge': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'extra_charge_per_km': openapi.Schema(type=openapi.TYPE_STRING),
+    #     }))
+    # def update(self, request, pk=None):
+    #     try:
+    #         delivery = DeliveryOption.objects.get(shop=request.data.get('shop'))
+    #         serializer = DeliveryDetailSerializer(instance=delivery, data=request.data)
+    #         if serializer.is_valid():
+    #             delivery = serializer.save()
+    #             vehicle = DeliveryVehicle.objects.filter(delivery_option=delivery).first()
+    #             vehicle_details = VehicleDetailSerializer(instance=vehicle, data=request.data)
+    #             vehicle_details.save()
+    #             return self.success_response(code='HTTP_200_OK',
+    #                                          message=DATA_SAVED_SUCCESSFULLY)
+    #         else:
+    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
+    #     except Exception as e:
+    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class PaymentMethodView(APIView, ResponseViewMixin):

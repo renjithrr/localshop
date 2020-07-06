@@ -11,19 +11,19 @@ router.register(r'delivery-option', DeliveryOptionView, basename='account-data')
 
 create_shop_detail = ShopDetailsView.as_view({'post': 'create'})
 retrieve_shop_detail = ShopDetailsView.as_view({'get': 'retrieve'})
-update_shop_detail = ShopDetailsView.as_view({'put': 'update'})
+# update_shop_detail = ShopDetailsView.as_view({'put': 'update'})
 
 create_shop_location = LocationDataView.as_view({'post': 'create'})
 retrieve_shop_location = LocationDataView.as_view({'get': 'retrieve'})
-update_shop_location = LocationDataView.as_view({'put': 'update'})
+# update_shop_location = LocationDataView.as_view({'put': 'update'})
 
 create_account_data = AccountDetailsView.as_view({'post': 'create'})
 retrieve_account_data = AccountDetailsView.as_view({'get': 'retrieve'})
-update_account_data = AccountDetailsView.as_view({'put': 'update'})
+# update_account_data = AccountDetailsView.as_view({'put': 'update'})
 
 create_delivery_option = DeliveryOptionView.as_view({'post': 'create'})
 retrieve_delivery_option = DeliveryOptionView.as_view({'get': 'retrieve'})
-update_delivery_option = DeliveryOptionView.as_view({'put': 'update'})
+# update_delivery_option = DeliveryOptionView.as_view({'put': 'update'})
 # create_payment_type = PaymentMethodView.as_view({'post': 'create'})
 # retrieve_payment_type = PaymentMethodView.as_view({'get': 'retrieve'})
 # update_payment_type = PaymentMethodView.as_view({'put': 'update'})
