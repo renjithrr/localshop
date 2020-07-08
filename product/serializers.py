@@ -15,7 +15,8 @@ class ProductRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand', 'moq', 'offer_prize',
-                  'lowest_selling_rate', 'highest_selling_rate', 'hsn_code', 'tax_rate', 'moq', 'unit', 'varients']
+                  'lowest_selling_rate', 'highest_selling_rate', 'hsn_code', 'tax_rate', 'moq', 'unit', 'varients',
+                  'mrp', 'is_hidden']
 
     def get_varients(self, obj):
         varients = obj.product_varients.all()
