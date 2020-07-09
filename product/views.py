@@ -34,7 +34,7 @@ class ProductView(APIView, ResponseViewMixin):
     def post(self, request):
         try:
             try:
-                product = Product.objects.get(name=request.data.get('name'))
+                product = Product.objects.get(id=request.data.get('id'))
                 serializer = ProductSerializer(instance=product, data=request.data)
             except Product.DoesNotExist:
                 serializer = ProductSerializer(data=request.data)
