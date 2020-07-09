@@ -185,7 +185,9 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                                                  message=SUCCESS)
                 else:
                     return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-        except ProductVarient.DoesNotExist:
+            return self.success_response(code='HTTP_200_OK',
+                                         message=SUCCESS)
+        except Exception as e:
             product = Product.objects.get(id=pk)
             if request.data.get('delete'):
                 product.is_deleted = True
@@ -202,6 +204,9 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                                                  message=SUCCESS)
                 else:
                     return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
+
+            return self.success_response(code='HTTP_200_OK',
+                                         message=SUCCESS)
 
 
 class ProductDataCsvView(APIView, ResponseViewMixin):
