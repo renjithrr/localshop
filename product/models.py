@@ -50,10 +50,10 @@ class Category(models.Model):
 
 class Product(AuditedModel, models.Model):
     name = models.CharField(max_length=255)
-    product_id = models.CharField(max_length=10, blank=True, null=True)
+    product_id = models.CharField(max_length=15, blank=True, null=True)
     brand = models.CharField(max_length=30, blank=True, null=True)
     # brand = models.ForeignKey(Brand, on_delete=models.CASCADE, blank=True, null=True)
-    category = models.CharField(max_length=40, blank=True, null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
     size = models.CharField(max_length=20, blank=True, null=True)
     color = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)

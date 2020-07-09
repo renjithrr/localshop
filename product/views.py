@@ -44,11 +44,12 @@ class ProductView(APIView, ResponseViewMixin):
                 product.save()
 
             else:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
                                          data={'product_id': product.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
+            print(e)
             logging.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
@@ -111,7 +112,7 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
                                          message=SUCCESS)
         except Exception as e:
             print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
     def retrieve(self, request, pk=None):
         try:
