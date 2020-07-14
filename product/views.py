@@ -4,7 +4,7 @@ import csv
 import json
 from datetime import date, timedelta, datetime
 from django.contrib.auth import authenticate
-from django.forms import modelformset_factory
+# from django.forms import modelformset_factory
 from django.db.models import Sum
 from django.db.models import Q
 from django.forms.models import modelformset_factory
@@ -67,13 +67,13 @@ class ProductView(APIView, ResponseViewMixin):
 class ProductImageUploadView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
     parser_classes = (MultiPartParser, FileUploadParser)
-    @swagger_auto_schema(tags=['product'], request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'is_product': openapi.Schema(type=openapi.TYPE_BOOLEAN),
-            'image': openapi.Schema(type=openapi.TYPE_FILE),
-            'image_id': openapi.Schema(type=openapi.TYPE_NUMBER),
-        }))
+    # @swagger_auto_schema(tags=['product'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'is_product': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #         'image': openapi.Schema(type=openapi.TYPE_FILE),
+    #         'image_id': openapi.Schema(type=openapi.TYPE_NUMBER),
+    #     }))
     def post(self, request):
         try:
             from user.models import AppUser
