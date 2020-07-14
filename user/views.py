@@ -18,7 +18,7 @@ from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfig
     PaymentMethod, UserPaymentMethod, DeliveryOption, DeliveryVehicle
 
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
-    DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer
+    DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
 
 
 # class DeviceTokenView(APIView, ResponseViewMixin):
@@ -202,7 +202,7 @@ class AccountDetailsView(GenericViewSet, ResponseViewMixin):
     #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
-class ShopDetailsView(GenericViewSet, ResponseViewMixin):
+class   ShopDetailsView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ShopDetailSerializer
 
@@ -395,7 +395,7 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
     #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
-class PaymentMethodView(APIView, ResponseViewMixin):
+class PaymentMethodView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
@@ -417,31 +417,30 @@ class PaymentMethodView(APIView, ResponseViewMixin):
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    #
-    # def retrieve(self, request, pk=None):
-    #     try:
-    #         shop = Shop.objects.get(id=pk)
-    #         serializer = ShopLocationDataSerializer(shop)
-    #         return self.success_response(code='HTTP_200_OK',
-    #                                      data=serializer.data,
-    #                                      message=SUCCESS)
-    #     except Shop.DoesNotExist:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-    #
-    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    # def update(self, request, pk=None):
-    #     try:
-    #         shop = Shop.objects.get(id=pk)
-    #         serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return self.success_response(code='HTTP_200_OK',
-    #                                          data=serializer.data,
-    #                                          message=SUCCESS)
-    #         else:
-    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-    #     except Exception as e:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+    def retrieve(self, request, pk=None):
+        try:
+            payment_methods = UserPaymentMethod.objects.filter(user=pk)
+            serializer = UserPaymentSerializer(payment_methods, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data=serializer.data,
+                                         message=SUCCESS)
+        except Shop.DoesNotExist:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+    @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
+    def update(self, request, pk=None):
+        try:
+            shop = Shop.objects.get(id=pk)
+            serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return self.success_response(code='HTTP_200_OK',
+                                             data=serializer.data,
+                                             message=SUCCESS)
+            else:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 class CommonParamsView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]

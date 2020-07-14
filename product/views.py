@@ -7,6 +7,8 @@ from django.contrib.auth import authenticate
 from django.forms import modelformset_factory
 from django.db.models import Sum
 from django.db.models import Q
+from django.forms.models import modelformset_factory
+from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 
 from rest_framework.views import APIView
 from rest_framework. viewsets import GenericViewSet
@@ -19,10 +21,11 @@ from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
 from utilities.utils import BulkCreateManager
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
-    ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer, ProductUpdateSerializer
+    ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer,\
+    ProductUpdateSerializer, ProductImageSerializer
 from product.models import Product, ProductVarientImage, ProductVarient, Category, UNIT_CHOICES,\
-    OrderItem, Order, ORDER_STATUS, PAYMENT_STATUS
-from product.forms import VarientImageForm
+    OrderItem, Order, ORDER_STATUS, PAYMENT_STATUS, ProductImage, ProductVarientImage
+from product.forms import VarientImageForm, PhotoForm
 from user.models import Shop
 from user.serializers import ProfileSerializer
 
@@ -40,8 +43,15 @@ class ProductView(APIView, ResponseViewMixin):
                 serializer = ProductSerializer(data=request.data)
             if serializer.is_valid():
                 product = serializer.save()
-                # shop.gst_image = request.FILES['gst_image']
                 product.save()
+            if request.data.get('image_ids', ''):
+                for value in request.data.get('image_ids'):
+                    try:
+                        image = ProductImage.objects.get(id=value)
+                        image.product = product
+                        image.save()
+                    except Exception as e:
+                        pass
 
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
@@ -55,21 +65,44 @@ class ProductView(APIView, ResponseViewMixin):
 
 
 class ProductImageUploadView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [AllowAny]
+    parser_classes = (MultiPartParser, FileUploadParser)
     @swagger_auto_schema(tags=['product'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'product_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'is_product': openapi.Schema(type=openapi.TYPE_BOOLEAN),
             'image': openapi.Schema(type=openapi.TYPE_FILE),
+            'image_id': openapi.Schema(type=openapi.TYPE_NUMBER),
         }))
     def post(self, request):
         try:
-            product = Product.objects.get(id=request.data.get('product_id'))
-            product.image = request.FILES.get('image')
-            product.save()
+            from user.models import AppUser
+            is_product = request.data.get('is_product')
+            image_id = request.data.get('image_id', '')
+            images = dict((request.data).lists())['image']
+            print(images)
+            product_list = []
+            if is_product:
+                model = ProductImage
+            else:
+                model = ProductVarientImage
+
+            if image_id:
+                try:
+                    photo = model.objects.get(id=image_id)
+                    photo.image = request.FILES['image']
+                    photo.save()
+                    product_list.append({'id': photo.id, 'image_url': photo.image.url})
+                except model.DoesNotExist:
+                    pass
+            else:
+                for value in images:
+                    photo = model(image=value)
+                    photo.save()
+                    product_list.append({'id': photo.id, 'image_url': photo.image.url})
+
             return self.success_response(code='HTTP_200_OK',
-                                         data={'image_url': product.image.url},
+                                         data={'image_details': product_list},
                                          message=SUCCESS)
 
         except Exception as e:
@@ -160,6 +193,14 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
             else:
                 print(serializer.errors)
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            if request.data.get('image_ids', ''):
+                for value in request.data.get('image_ids'):
+                    try:
+                        image = ProductVarientImage.objects.get(id=value)
+                        image.varient = varient
+                        image.save()
+                    except Exception as e:
+                        pass
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:

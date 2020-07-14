@@ -77,6 +77,11 @@ class Product(AuditedModel, models.Model):
         return self.name
 
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='product_images', on_delete=models.CASCADE, blank=True, null=True)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+
+
 class ProductVarient(AuditedModel, models.Model):
     product = models.ForeignKey(Product, related_name='product_varients', on_delete=models.CASCADE)
     size = models.CharField(max_length=20, blank=True, null=True)
@@ -99,7 +104,7 @@ class ProductVarient(AuditedModel, models.Model):
 
 
 class ProductVarientImage(models.Model):
-    varient = models.ForeignKey(ProductVarient, on_delete=models.CASCADE)
+    varient = models.ForeignKey(ProductVarient, on_delete=models.CASCADE, blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
 

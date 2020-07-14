@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from user.models import AppUser as User, Shop, DeliveryOption, DeliveryVehicle
+from user.models import AppUser as User, Shop, DeliveryOption, DeliveryVehicle, UserPaymentMethod, PaymentMethod
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -54,4 +54,21 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['shop_name', 'gst_reg_number', 'opening', 'closing', 'image']
+        fields = ['id', 'shop_name', 'gst_reg_number', 'opening', 'closing', 'image']
+
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = ['payment_type', 'choices']
+
+
+class UserPaymentSerializer(serializers.ModelSerializer):
+    payment_method = PaymentMethodSerializer()
+
+    class Meta:
+        model = UserPaymentMethod
+        fields = ['id', 'payment_method']
+
+    # def get_payment_method_label(self, obj):
+    #     return obj.payment_method.
