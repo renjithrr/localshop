@@ -224,7 +224,7 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                 if serializer.is_valid():
                     serializer.save()
                     if request.data.get('image_ids', ''):
-                        existing_images = ProductImage.objects.exclude(id__in=[request.data.get('image_ids', '')])
+                        existing_images = ProductVarientImage.objects.exclude(id__in=[request.data.get('image_ids', '')])
                         if existing_images:
                             existing_images.delete()
                         for value in request.data.get('image_ids'):
