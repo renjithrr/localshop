@@ -20,7 +20,7 @@ class NearbyShop(APIView, ResponseViewMixin):
                                    type=openapi.TYPE_STRING)
     longitude = openapi.Parameter('all', openapi.IN_QUERY, description="List all products",
                                     type=openapi.TYPE_STRING)
-    shop_category = openapi.Parameter('all', openapi.IN_QUERY, description="List all products",
+    shop_category = openapi.Parameter('shop_category', openapi.IN_QUERY, description="List all products",
                                     type=openapi.TYPE_STRING)
     @swagger_auto_schema(tags=['customer'], manual_parameters=[latitude, longitude, shop_category])
     def get(self, request):
