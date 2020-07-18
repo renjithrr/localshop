@@ -161,7 +161,7 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
 
 
 class ProductVarientView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductVarientSerializer
 
     def get_queryset(self):
@@ -213,11 +213,16 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
     def update(self, request, pk=None):
         try:
             varient = ProductVarient.objects.get(id=pk)
+            print(request.data)
             if request.data.get('delete'):
                 varient.is_deleted = True
                 varient.save()
+                print(varient.is_deleted)
             elif request.data.get('hide'):
-                varient.is_hidden = True
+                if request.data.get('hide') == 'true':
+                    varient.is_hidden = True
+                else:
+                    varient.is_hidden = False
                 varient.save()
             else:
                 serializer = ProductVarientSerializer(instance=varient, data=request.data)
