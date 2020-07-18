@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from product.models import Product, ProductVarient, Order, OrderItem, ProductImage
+from product.models import Product, ProductVarient, Order, OrderItem, ProductImage, ProductVarientImage
 from django.db.models import Sum
 
 
@@ -27,7 +27,9 @@ class ProductRetrieveSerializer(serializers.ModelSerializer):
                  'moq': varient.moq, 'offer_prize': varient.offer_prize,
                  'lowest_selling_rate': varient.lowest_selling_rate, 'mrp': varient.mrp,
                  'highest_selling_rate': varient.highest_selling_rate, 'hsn_code': obj.hsn_code,
-                 'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id} for varient in varients]
+                 'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id,
+                 'images': [{'id': image.id, 'image_url': image.image.url}
+                  for image in ProductVarientImage.objects.filter(product=obj)]} for varient in varients]
 
     def get_product_images(self, obj):
         return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]

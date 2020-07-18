@@ -80,9 +80,8 @@ class ProductImageUploadView(APIView, ResponseViewMixin):
             is_product = request.data.get('is_product')
             image_id = request.data.get('image_id', '')
             images = dict((request.data).lists())['image']
-            print(images)
             product_list = []
-            if is_product:
+            if is_product == 'true':
                 model = ProductImage
             else:
                 model = ProductVarientImage
@@ -154,12 +153,12 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
                                          message=SUCCESS)
-        except Product.DoesNotExist:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class ProductVarientView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = ProductVarientSerializer
 
     def get_queryset(self):
