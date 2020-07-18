@@ -220,6 +220,14 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                 serializer = ProductVarientSerializer(instance=varient, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
+                    if request.data.get('image_ids', ''):
+                        for value in request.data.get('image_ids'):
+                            try:
+                                image = ProductVarientImage.objects.get(id=value)
+                                image.varient = varient
+                                image.save()
+                            except Exception as e:
+                                pass
                     return self.success_response(code='HTTP_200_OK',
                                                  data=serializer.data,
                                                  message=SUCCESS)
@@ -242,8 +250,8 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                     if request.data.get('image_ids', ''):
                         for value in request.data.get('image_ids'):
                             try:
-                                image = ProductVarientImage.objects.get(id=value)
-                                image.varient = varient
+                                image = ProductImage.objects.get(id=value)
+                                image.product = product
                                 image.save()
                             except Exception as e:
                                 pass
