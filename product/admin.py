@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 from django import forms
 
 
-from product.models import Product, Category, Brand, ProductVarient, Order, OrderItem, ProductImage
+from product.models import Product, Category, Brand, ProductVarient, Order, OrderItem, ProductImage, ProductVarientImage
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -13,6 +13,11 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class ProductImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'image',)
+
+
+class ProductVarientImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'image',)
+
 
 class CsvImportForm(forms.Form):
     csv_file = forms.FileField()
@@ -76,3 +81,4 @@ admin.site.register(ProductVarient, ProductVarientAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
 admin.site.register(ProductImage, ProductImageAdmin)
+admin.site.register(ProductVarientImage, ProductVarientImageAdmin)
