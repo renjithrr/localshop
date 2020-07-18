@@ -30,7 +30,7 @@ class ProductRetrieveSerializer(serializers.ModelSerializer):
                  'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id} for varient in varients]
 
     def get_product_images(self, obj):
-        return [{'id': image.id, 'image_url': image.url} for image in ProductImage.objects.filter(product=obj)]
+        return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]
 
 
 class ProductPricingSerializer(serializers.ModelSerializer):
@@ -53,7 +53,7 @@ class ProductListingSerializer(serializers.ModelSerializer):
         fields = ['id', 'product_id', 'brand', 'name', 'quantity', 'mrp', 'is_hidden', 'product_images']
 
     def get_product_images(self, obj):
-        return [{'id': image.id, 'image_url': image.url} for image in ProductImage.objects.filter(product=obj)]
+        return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]
 
 
 class ProductVarientSerializer(serializers.ModelSerializer):
@@ -100,7 +100,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
                  'product_id': item.product_id.product_id}
                 for item in OrderItem.objects.filter(order_id=obj)]
 
-class ProductImageSerializer ( serializers.Serializer ) :
+
+class ProductImageSerializer(serializers.Serializer) :
     image = serializers.ListField(
                        child=serializers.FileField( max_length=100000,
                                          allow_empty_file=False,

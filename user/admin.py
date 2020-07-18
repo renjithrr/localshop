@@ -13,7 +13,7 @@ class DeviceTokenAdmin(admin.ModelAdmin):
 
 
 class ShopAdmin(admin.ModelAdmin):
-    list_display = ('vendor_name', 'user', 'shop_name', 'business_name')
+    list_display = ('vendor_name', 'user', 'shop_name', 'business_name', 'location')
 
 
 class AppConfigDataAdmin(admin.ModelAdmin):

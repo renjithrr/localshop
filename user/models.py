@@ -1,4 +1,4 @@
-from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractUser, User, UserManager
 
 from localshop.settings.storage_backends import PublicMediaStorage
@@ -94,6 +94,7 @@ class Shop(AuditedModel, models.Model):
     pincode = models.CharField(max_length=10, blank=True, null=True)
     lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    location = models.PointField(blank=True, null=True)
     opening = models.TimeField(blank=True, null=True)
     closing = models.TimeField(blank=True, null=True)
     # delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
@@ -103,6 +104,7 @@ class Shop(AuditedModel, models.Model):
     # within_km = models.FloatField(blank=True, null=True)
     # extra_charge_per_km = models.FloatField(blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
     def __str__(self):
         return self.shop_name

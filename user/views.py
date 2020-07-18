@@ -447,7 +447,9 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            shop_choices = [{'id': shop.id, 'category': shop.name, 'fssai': shop.fssai} for shop in ShopCategory.objects.all()]
+
+            shop_choices = [{'id': shop.id, 'category': shop.name, 'fssai': shop.fssai}
+                            for shop in ShopCategory.objects.all()]
             payment_methods = [{'id': method.id, 'method': method.payment_type} for method in PaymentMethod.objects.all()]
             delivery_choices = DELIVERY_CHOICES.choices()
             delivery_choices = [{'id': shop[0], 'choice': shop[1]} for shop in delivery_choices]
@@ -508,11 +510,15 @@ class UserProfleView(APIView, ResponseViewMixin):
         properties={
             'user_id': openapi.Schema(type=openapi.TYPE_STRING),
             'image': openapi.Schema(type=openapi.TYPE_FILE),
+            'is_profile_image': openapi.Schema(type=openapi.TYPE_FILE),
         }))
     def post(self, request):
         try:
             shop = Shop.objects.get(user=request.data.get('user_id'))
-            shop.image = request.FILES.get('image')
+            if request.data.get('is_profile_image'):
+                shop.image = request.FILES.get('image')
+            else:
+                shop.logo = request.FILES.get('image')
             shop.save()
             return self.success_response(code='HTTP_200_OK',
                                          data={'image_url': shop.image.url},
@@ -520,4 +526,4 @@ class UserProfleView(APIView, ResponseViewMixin):
 
         except Exception as e:
             print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

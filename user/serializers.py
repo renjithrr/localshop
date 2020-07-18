@@ -9,10 +9,14 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class ShopDetailSerializer(serializers.ModelSerializer):
+    non_gst = serializers.SerializerMethodField()
     class Meta:
         model = Shop
         fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'shop_category', 'gst_reg_number', 'opening',
-                  'closing', 'fssai']
+                  'closing', 'fssai', 'non_gst']
+
+    def get_non_gst(self, obj):
+        return False if obj.gst_reg_number else True
 
 
 class ShopLocationDataSerializer(serializers.ModelSerializer):
@@ -54,7 +58,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'shop_name', 'gst_reg_number', 'opening', 'closing', 'image']
+        fields = ['id', 'shop_name', 'gst_reg_number', 'opening', 'closing', 'image', 'logo']
 
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
