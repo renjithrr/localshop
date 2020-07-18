@@ -29,7 +29,7 @@ class ProductRetrieveSerializer(serializers.ModelSerializer):
                  'highest_selling_rate': varient.highest_selling_rate, 'hsn_code': obj.hsn_code,
                  'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id,
                  'images': [{'id': image.id, 'image_url': image.image.url}
-                  for image in ProductVarientImage.objects.filter(product=obj)]} for varient in varients]
+                  for image in ProductVarientImage.objects.filter(varient=varient)]} for varient in varients]
 
     def get_product_images(self, obj):
         return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]
