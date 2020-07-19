@@ -1,5 +1,5 @@
 import logging
-from django.contrib.auth import authenticate
+import boto3
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -9,66 +9,15 @@ from drf_yasg import openapi
 from twilio.rest import Client
 
 from utilities.mixins import ResponseViewMixin
-from utilities.messages import INVALID_CREDENTIALS
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
-from utilities.messages import PROVIDE_AUTHENTICATION_CREDENTIALS, GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
 from utilities.utils import OTPgenerator
 
-from user.models import DeviceToken, USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
-    PaymentMethod, UserPaymentMethod, DeliveryOption, DeliveryVehicle
+from user.models import USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
+    PaymentMethod, UserPaymentMethod, DeliveryOption
 
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
     DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
-
-
-# class DeviceTokenView(APIView, ResponseViewMixin):
-#     """
-#     register a new device when a user logged into the system
-#     """
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request):
-#         try:
-#             device_id = request.data.get('device_id', '')
-#             user_id = request.data.get('user_id', '')
-#             user_type = request.data.get('user_type', '')
-#             obj, _ = DeviceToken.objects.get_or_create(user_id=user_id, user_type=user_type,
-#                                                        defaults={'is_active': True})
-#             obj.device_id = device_id
-#             obj.save()
-#
-#             return self.success_response(code='HTTP_200_OK')
-#         except Exception as e:
-#             logging.exception(e)
-#             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-
-
-# class LoginView(APIView, ResponseViewMixin):
-#     permission_classes = [AllowAny]
-#
-#     def post(self, request):
-#         try:
-#             serializer = UserSerializer(data=request.data)
-#             if serializer.is_valid():
-#                 valid_data = serializer.data
-#                 username = valid_data.get("username")
-#                 password = valid_data.get("password")
-#                 if not username or not password:
-#                     return self.error_response(code='HTTP_400_BAD_REQUEST',
-#                                                message=PROVIDE_AUTHENTICATION_CREDENTIALS)
-#                 user = authenticate(username=username, password=password)
-#                 token, _ = Token.objects.get_or_create(user=user)
-#
-#                 return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
-#                                              data={'user_id': user.id,
-#                                                    'user_type': user.role,
-#                                                    'token': token.key
-#                                                    })
-#             else:
-#                 return self.error_response(code='HTTP_400_BAD_REQUEST', message=INVALID_CREDENTIALS)
-#         except Exception as e:
-#             logging.exception(e)
-#             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=INVALID_CREDENTIALS)
 
 
 class VerifyMobileNumberView(APIView, ResponseViewMixin):
@@ -88,15 +37,22 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 defaults={'role': USER_TYPE_CHOICES.vendor, 'is_active': False},
             )
             if created:
-                account_sid = AppConfigData.objects.get(key='TWILIO_ACCOUNT_ID').value
-                auth_token = AppConfigData.objects.get(key='TWILIO_AUTH_TOKEN').value
-                client = Client(account_sid, auth_token)
+                aws_access_key_id = AppConfigData.objects.get(key='AWS_ACCESS_KEY_ID').value
+                aws_secret_access_key = AppConfigData.objects.get(key='AWS_SECRET_ACCESS_KEY').value
+                topic_arn = AppConfigData.objects.get(key='TOPIC_ARN').value
                 otp = OTPgenerator()
-                message = client.messages.create(
-                    body=otp,
-                    from_='+17402791825',
-                    to=mobile_number
+                client = boto3.client(
+                    "sns",
+                    aws_access_key_id=aws_access_key_id,
+                    aws_secret_access_key=aws_secret_access_key,
+                    region_name="us-east-1"
                 )
+                client.subscribe(
+                    TopicArn=topic_arn,
+                    Protocol='sms',
+                    Endpoint=mobile_number  # <-- number who'll receive an SMS message.
+                )
+                client.publish(Message="Townie verification otp is " + otp, TopicArn=topic_arn)
                 user.verification_otp = otp
                 user.save()
             return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
@@ -186,23 +142,8 @@ class AccountDetailsView(GenericViewSet, ResponseViewMixin):
         except AppUser.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    # def update(self, request, pk=None):
-    #     try:
-    #         user = AppUser.objects.get(id=pk)
-    #         serializer = AccountSerializer(instance=user, data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return self.success_response(code='HTTP_200_OK',
-    #                                          data=serializer.data,
-    #                                          message=SUCCESS)
-    #         else:
-    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-    #     except Exception as e:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
-
-class   ShopDetailsView(GenericViewSet, ResponseViewMixin):
+class ShopDetailsView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ShopDetailSerializer
 
@@ -221,7 +162,8 @@ class   ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 serializer = ShopDetailSerializer(data=request.data)
             if serializer.is_valid():
                 shop = serializer.save()
-                # shop.gst_image = request.FILES['gst_image']
+                if request.FILES['gst_image']:
+                    shop.gst_image = request.FILES['gst_image']
                 shop.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
@@ -241,21 +183,6 @@ class   ShopDetailsView(GenericViewSet, ResponseViewMixin):
                                          message=SUCCESS)
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-
-    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    # def update(self, request, pk=None):
-    #     try:
-    #         shop = Shop.objects.get(id=pk)
-    #         serializer = ShopDetailSerializer(instance=shop, data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return self.success_response(code='HTTP_200_OK',
-    #                                          data=serializer.data,
-    #                                          message=SUCCESS)
-    #         else:
-    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-    #     except Exception as e:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class LocationDataView(GenericViewSet, ResponseViewMixin):
@@ -292,21 +219,6 @@ class LocationDataView(GenericViewSet, ResponseViewMixin):
                                          message=SUCCESS)
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-
-    # @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
-    # def update(self, request, pk=None):
-    #     try:
-    #         shop = Shop.objects.get(id=pk)
-    #         serializer = ShopLocationDataSerializer(instance=shop, data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return self.success_response(code='HTTP_200_OK',
-    #                                          data=serializer.data,
-    #                                          message=SUCCESS)
-    #         else:
-    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-    #     except Exception as e:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
@@ -366,34 +278,6 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
         except Shop.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-    # @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
-    #     type=openapi.TYPE_OBJECT,
-    #     properties={
-    #         'shop': openapi.Schema(type=openapi.TYPE_INTEGER),
-    #         'delivery_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
-    #         'delivery_radius': openapi.Schema(type=openapi.TYPE_STRING),
-    #         'delivery_charge': openapi.Schema(type=openapi.TYPE_NUMBER),
-    #         'vehicle_and_capacity': openapi.Schema(type=openapi.TYPE_STRING),
-    #         'within_km': openapi.Schema(type=openapi.TYPE_STRING),
-    #         'min_charge': openapi.Schema(type=openapi.TYPE_STRING),
-    #         'extra_charge_per_km': openapi.Schema(type=openapi.TYPE_STRING),
-    #     }))
-    # def update(self, request, pk=None):
-    #     try:
-    #         delivery = DeliveryOption.objects.get(shop=request.data.get('shop'))
-    #         serializer = DeliveryDetailSerializer(instance=delivery, data=request.data)
-    #         if serializer.is_valid():
-    #             delivery = serializer.save()
-    #             vehicle = DeliveryVehicle.objects.filter(delivery_option=delivery).first()
-    #             vehicle_details = VehicleDetailSerializer(instance=vehicle, data=request.data)
-    #             vehicle_details.save()
-    #             return self.success_response(code='HTTP_200_OK',
-    #                                          message=DATA_SAVED_SUCCESSFULLY)
-    #         else:
-    #             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
-    #     except Exception as e:
-    #         return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
-
 
 class PaymentMethodView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
@@ -442,6 +326,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
         except Exception as e:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
+
 class CommonParamsView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
@@ -450,7 +335,8 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
             shop_choices = [{'id': shop.id, 'category': shop.name, 'fssai': shop.fssai}
                             for shop in ShopCategory.objects.all()]
-            payment_methods = [{'id': method.id, 'method': method.payment_type} for method in PaymentMethod.objects.all()]
+            payment_methods = [{'id': method.id, 'method': method.payment_type}
+                               for method in PaymentMethod.objects.all()]
             delivery_choices = DELIVERY_CHOICES.choices()
             delivery_choices = [{'id': shop[0], 'choice': shop[1]} for shop in delivery_choices]
             return self.success_response(code='HTTP_200_OK',
@@ -527,3 +413,23 @@ class UserProfleView(APIView, ResponseViewMixin):
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class OrderHistoryView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    customer = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Customer ID",
+                                 type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer])
+    def get(self, request):
+        try:
+            customer = Customer.objects.get(id=request.GET.get('customer_id'))
+            orders = customer.customer_orders
+            serializer = CustomerOrderSerializer(orders, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'orders': serializer.data,
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

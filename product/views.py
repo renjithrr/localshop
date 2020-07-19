@@ -211,20 +211,20 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
     def update(self, request, pk=None):
-        try:
-            varient = ProductVarient.objects.get(id=pk)
-            print(request.data)
-            if request.data.get('delete'):
-                varient.is_deleted = True
-                varient.save()
-                print(varient.is_deleted)
-            elif request.data.get('hide'):
-                if request.data.get('hide') == 'true':
-                    varient.is_hidden = True
-                else:
-                    varient.is_hidden = False
-                varient.save()
+        if request.data.get('delete'):
+            product = Product.objects.get(id=pk)
+            product.is_deleted = True
+            product.save()
+        elif request.data.get('hide'):
+            product = Product.objects.get(id=pk)
+            if request.data.get('hide') == 'true':
+                product.is_hidden = True
             else:
+                product.is_hidden = False
+            product.save()
+        else:
+            try:
+                varient = ProductVarient.objects.get(id=pk)
                 serializer = ProductVarientSerializer(instance=varient, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
@@ -240,43 +240,13 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                             except Exception as e:
                                 pass
                     return self.success_response(code='HTTP_200_OK',
-                                                 data=serializer.data,
-                                                 message=SUCCESS)
+                                                     data=serializer.data,
+                                                     message=SUCCESS)
                 else:
                     return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
-            return self.success_response(code='HTTP_200_OK',
-                                         message=SUCCESS)
-        except Exception as e:
-            product = Product.objects.get(id=pk)
-            if request.data.get('delete'):
-                product.is_deleted = True
-                product.save()
-            elif request.data.get('hide'):
-                product.is_hidden = True
-                product.save()
-            else:
-                serializer = ProductUpdateSerializer(instance=product, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    if request.data.get('image_ids', ''):
-                        existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''))
-                        if existing_images:
-                            existing_images.delete()
-                        for value in request.data.get('image_ids'):
-                            try:
-                                image = ProductImage.objects.get(id=value)
-                                image.product = product
-                                image.save()
-                            except Exception as e:
-                                pass
-                    return self.success_response(code='HTTP_200_OK',
-                                                 data=serializer.data,
-                                                 message=SUCCESS)
-                else:
-                    return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
 
-            return self.success_response(code='HTTP_200_OK',
-                                         message=SUCCESS)
+            except Exception as e:
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class ProductDataCsvView(APIView, ResponseViewMixin):
