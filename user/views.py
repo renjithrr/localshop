@@ -290,7 +290,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
             'payment_type': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING)),
 
         }))
-    def post(self, request):
+    def create(self, request):
         user_id = request.data.get('user_id')
         payment_type = request.data.get('payment_type')
         try:
