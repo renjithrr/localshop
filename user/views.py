@@ -36,23 +36,38 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 mobile_number=mobile_number,
                 defaults={'role': USER_TYPE_CHOICES.vendor, 'is_active': False},
             )
-            if created:
+            if user:
                 aws_access_key_id = AppConfigData.objects.get(key='AWS_ACCESS_KEY_ID').value
                 aws_secret_access_key = AppConfigData.objects.get(key='AWS_SECRET_ACCESS_KEY').value
-                topic_arn = AppConfigData.objects.get(key='TOPIC_ARN').value
+                applicationId = AppConfigData.objects.get(key='APPLICATION_ID').value
                 otp = OTPgenerator()
                 client = boto3.client(
-                    "sns",
+                    "pinpoint",
                     aws_access_key_id=aws_access_key_id,
                     aws_secret_access_key=aws_secret_access_key,
                     region_name="us-east-1"
                 )
-                client.subscribe(
-                    TopicArn=topic_arn,
-                    Protocol='sms',
-                    Endpoint=mobile_number  # <-- number who'll receive an SMS message.
-                )
-                client.publish(Message="Townie verification otp is " + otp, TopicArn=topic_arn)
+                try:
+                    response = client.send_messages(
+                    ApplicationId = applicationId,
+                    MessageRequest = {
+                        'Addresses': {
+                            '+91' + mobile_number: {
+                                'ChannelType': 'SMS'
+                            }
+                        },
+                        'MessageConfiguration': {
+                            'SMSMessage': {
+                                'Body': 'Townie verification otp is ' + otp,
+                                'Keyword': "keyword_555701130102",
+                                'MessageType': "TRANSACTIONAL",
+                                'OriginationNumber': "+12515453033",
+                                'SenderId': "Townie"
+                            }
+                        }
+                    })
+                except Exception as e:
+                    pass
                 user.verification_otp = otp
                 user.save()
             return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
@@ -163,7 +178,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 serializer = ShopDetailSerializer(data=data)
             if serializer.is_valid():
                 shop = serializer.save()
-                if request.FILES['gst_image']:
+                if request.FILES.get('gst_image', ''):
                     shop.gst_image = request.FILES['gst_image']
                 shop.save()
             else:
@@ -296,6 +311,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
         try:
             for value in payment_type:
                 UserPaymentMethod.objects.get_or_create(user_id=user_id, payment_method_id=value)
+            UserPaymentMethod.objects.exclude(payment_method_id__in=payment_type).delete()
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:

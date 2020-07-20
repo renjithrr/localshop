@@ -10,10 +10,11 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class ShopDetailSerializer(serializers.ModelSerializer):
     non_gst = serializers.SerializerMethodField()
+    gst_image = serializers.SerializerMethodField(source='gst_image.url')
     class Meta:
         model = Shop
         fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'shop_category', 'gst_reg_number', 'opening',
-                  'closing', 'fssai', 'non_gst']
+                  'closing', 'fssai', 'non_gst', 'gst_image']
 
     def get_non_gst(self, obj):
         return False if obj.gst_reg_number else True
