@@ -1,12 +1,12 @@
 import logging
 import boto3
+import json
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from twilio.rest import Client
 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
@@ -152,14 +152,15 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
     def create(self, request):
-        user_id = request.data['data']['user']
+        data = json.loads(request.data['data'])
+        user_id = data['user']
         try:
 
             shop = Shop.objects.filter(user=user_id).first()
             if shop:
-                serializer = ShopDetailSerializer(instance=shop, data=request.data['data'])
+                serializer = ShopDetailSerializer(instance=shop, data=data)
             else:
-                serializer = ShopDetailSerializer(data=request.data['data'])
+                serializer = ShopDetailSerializer(data=data)
             if serializer.is_valid():
                 shop = serializer.save()
                 if request.FILES['gst_image']:
