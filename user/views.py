@@ -152,14 +152,14 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
     def create(self, request):
-        user_id = request.data.get('user')
+        user_id = request.data['data']['user']
         try:
 
             shop = Shop.objects.filter(user=user_id).first()
             if shop:
-                serializer = ShopDetailSerializer(instance=shop, data=request.data)
+                serializer = ShopDetailSerializer(instance=shop, data=request.data['data'])
             else:
-                serializer = ShopDetailSerializer(data=request.data)
+                serializer = ShopDetailSerializer(data=request.data['data'])
             if serializer.is_valid():
                 shop = serializer.save()
                 if request.FILES['gst_image']:
