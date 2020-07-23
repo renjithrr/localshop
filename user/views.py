@@ -52,7 +52,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                     ApplicationId = applicationId,
                     MessageRequest = {
                         'Addresses': {
-                            '+91' + mobile_number: {
+                            mobile_number: {
                                 'ChannelType': 'SMS'
                             }
                         },
