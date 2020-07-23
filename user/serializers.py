@@ -48,7 +48,8 @@ class DeliveryRetrieveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeliveryOption
-        fields = ['delivery_type', 'delivery_charge', 'delivery_radius','shop', 'vehicle_Details']
+        fields = ['delivery_type', 'delivery_charge', 'delivery_radius','shop', 'vehicle_Details', 'free_delivery',
+                  'free_delivery_for']
 
     def get_order_items(self, obj):
         vehicles = obj.delivery_option_vehicle.all()
