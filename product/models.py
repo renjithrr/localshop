@@ -71,6 +71,7 @@ class Product(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden = models.BooleanField(default=False)
+    shop = models.ManyToManyField(Shop, related_name='shop_products', blank=True, null=True)
 
 
     def __str__(self):
@@ -101,6 +102,7 @@ class ProductVarient(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden= models.BooleanField(default=False)
+
 
 
 class ProductVarientImage(models.Model):

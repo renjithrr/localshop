@@ -418,7 +418,8 @@ class UserProfleView(APIView, ResponseViewMixin):
     def post(self, request):
         try:
             shop = Shop.objects.get(user=request.data.get('user_id'))
-            if request.data.get('is_profile_image'):
+            image_data = request.data.get('is_profile_image')
+            if image_data == 'true':
                 shop.image = request.FILES.get('image')
             else:
                 shop.logo = request.FILES.get('image')

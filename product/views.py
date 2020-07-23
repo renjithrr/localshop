@@ -55,6 +55,11 @@ class ProductView(APIView, ResponseViewMixin):
                         image.save()
                     except Exception as e:
                         pass
+            try:
+                shop = Shop.objects.get(user=request.user)
+                product.shop.add(shop)
+            except Exception as e:
+                pass
 
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
@@ -79,7 +84,6 @@ class ProductImageUploadView(APIView, ResponseViewMixin):
     #     }))
     def post(self, request):
         try:
-            from user.models import AppUser
             is_product = request.data.get('is_product')
             image_id = request.data.get('image_id', '')
             images = dict((request.data).lists())['image']
@@ -113,7 +117,7 @@ class ProductImageUploadView(APIView, ResponseViewMixin):
 
 
 class  ProductListingView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductListingSerializer
     pagination_class = CustomOffsetPagination
     test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
@@ -131,12 +135,14 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
     @swagger_auto_schema(tags=['product'], manual_parameters=[test_param, test_param1, test_param2, test_param3])
     def list(self, request, *args, **kwargs):
         try:
-            products = Product.objects.filter(is_deleted=False).order_by('quantity')
+            products = Product.objects.filter(is_deleted=False, is_hidden=False,
+                                              shop__user=request.user).order_by('quantity')
             if 'search' in request.GET:
                search_term = request.GET.get('search')
                products = products.filter(name__icontains=search_term)
             if 'hidden' in request.GET:
-                products = products.filter(is_hidden=True)
+                products = Product.objects.filter(is_deleted=False, is_hidden=True,
+                                                  shop__user=request.user).order_by('quantity')
             if 'out_of_stock' in request.GET:
                 products = products.filter(quantity=0)
             paginted_products = self.paginate_queryset(products)
