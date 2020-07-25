@@ -72,7 +72,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 class PaymentMethodSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaymentMethod
-        fields = ['payment_type', 'choices']
+        fields = ['id','payment_type', 'choices']
 
 
 class UserPaymentSerializer(serializers.ModelSerializer):

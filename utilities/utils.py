@@ -1,4 +1,5 @@
 import math, random
+import boto3
 from collections import defaultdict
 from django.apps import apps
 
@@ -20,6 +21,12 @@ class Konstants:
 
     def choices(self):
         return [(k.v, k.label) for k in self.klist]
+
+    def get_label(self, key):
+        for k in self.klist:
+            if k.v == key:
+                return k.label
+        return None
 
 
 def OTPgenerator() :
@@ -72,3 +79,40 @@ class BulkCreateManager(object):
         for model_name, objs in self._create_queues.items():
             if len(objs) > 0:
                 self._commit(apps.get_model(model_name))
+
+
+def deliver_sms(mobile_number, otp):
+    from user.models import AppConfigData
+    aws_access_key_id = AppConfigData.objects.get(key='AWS_ACCESS_KEY_ID').value
+    aws_secret_access_key = AppConfigData.objects.get(key='AWS_SECRET_ACCESS_KEY').value
+    applicationId = AppConfigData.objects.get(key='APPLICATION_ID').value
+    client = boto3.client(
+        "pinpoint",
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name="us-east-1"
+    )
+    try:
+        response = client.send_messages(
+            ApplicationId=applicationId,
+            MessageRequest={
+                'Addresses': {
+                    mobile_number: {
+                        'ChannelType': 'SMS'
+                    }
+                },
+                'MessageConfiguration': {
+                    'SMSMessage': {
+                        'Body': 'Townie verification otp is ' + otp,
+                        'Keyword': "keyword_555701130102",
+                        'MessageType': "TRANSACTIONAL",
+                        'OriginationNumber': "+12515453033",
+                        'SenderId': "Townie"
+                    }
+                }
+            })
+        print(response)
+
+    except Exception as e:
+        pass
+    return True

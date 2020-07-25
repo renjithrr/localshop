@@ -10,3 +10,4 @@ Pillow==7.1.2
 twilio==6.40.0
 django-multiselectfield==0.1.12
 openpyxl==3.0.3
+geopy==2.0.0

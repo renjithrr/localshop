@@ -105,6 +105,7 @@ class Shop(AuditedModel, models.Model):
     # extra_charge_per_km = models.FloatField(blank=True, null=True)
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    rating = models.FloatField(default=5)
 
     def __str__(self):
         return self.shop_name

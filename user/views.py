@@ -1,5 +1,4 @@
 import logging
-import boto3
 import json
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -10,10 +9,10 @@ from drf_yasg import openapi
 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
-from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP
-from utilities.utils import OTPgenerator
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT
+from utilities.utils import OTPgenerator, deliver_sms
 
-from user.models import USER_TYPE_CHOICES, AppUser, Shop, AppConfigData, DELIVERY_CHOICES, ShopCategory,\
+from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod, DeliveryOption
 
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
@@ -23,54 +22,30 @@ from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocati
 class VerifyMobileNumberView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+    @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
             'mobile_number': openapi.Schema(type=openapi.TYPE_STRING),
+            'is_customer': openapi.Schema(type=openapi.TYPE_BOOLEAN),
         }))
     def post(self, request):
         mobile_number = request.data.get('mobile_number')
         try:
+            if request.data.get('is_customer', ' '):
+                role = USER_TYPE_CHOICES.customer
+            else:
+                role = USER_TYPE_CHOICES.vendor
             user, created = AppUser.objects.get_or_create(
                 username=mobile_number,
                 mobile_number=mobile_number,
-                defaults={'role': USER_TYPE_CHOICES.vendor, 'is_active': False},
+                defaults={'role': role, 'is_active': False},
             )
             if user:
-                aws_access_key_id = AppConfigData.objects.get(key='AWS_ACCESS_KEY_ID').value
-                aws_secret_access_key = AppConfigData.objects.get(key='AWS_SECRET_ACCESS_KEY').value
-                applicationId = AppConfigData.objects.get(key='APPLICATION_ID').value
                 otp = OTPgenerator()
-                client = boto3.client(
-                    "pinpoint",
-                    aws_access_key_id=aws_access_key_id,
-                    aws_secret_access_key=aws_secret_access_key,
-                    region_name="us-east-1"
-                )
-                try:
-                    response = client.send_messages(
-                    ApplicationId = applicationId,
-                    MessageRequest = {
-                        'Addresses': {
-                            mobile_number: {
-                                'ChannelType': 'SMS'
-                            }
-                        },
-                        'MessageConfiguration': {
-                            'SMSMessage': {
-                                'Body': 'Townie verification otp is ' + otp,
-                                'Keyword': "keyword_555701130102",
-                                'MessageType': "TRANSACTIONAL",
-                                'OriginationNumber': "+12515453033",
-                                'SenderId': "Townie"
-                            }
-                        }
-                    })
-                except Exception as e:
-                    pass
+                deliver_sms(mobile_number, otp)
                 user.verification_otp = otp
                 user.save()
-            return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
+            return self.success_response(code='HTTP_200_OK', message=OTP_SENT,
                                          data={'user_id': user.id,
                                                'user_type': user.role
                                                })
@@ -83,7 +58,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
 class VerifyMobileOtpView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
+    @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
             'mobile_number': openapi.Schema(type=openapi.TYPE_STRING),
@@ -98,11 +73,14 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
                 token, _ = Token.objects.get_or_create(user=user)
                 user.is_active = True
                 user.save()
-                try:
-                    UserPaymentMethod.objects.get(user=user)
+                if user.role == USER_TYPE_CHOICES.vendor:
+                    try:
+                        UserPaymentMethod.objects.get(user=user)
+                        is_profile_completed = True
+                    except UserPaymentMethod.DoesNotExist:
+                        is_profile_completed = False
+                else:
                     is_profile_completed = True
-                except UserPaymentMethod.DoesNotExist:
-                    is_profile_completed = False
                 return self.success_response(code='HTTP_200_OK', message=AUTHENTICATION_SUCCESSFUL,
                                              data={'user_id': user.id,
                                                    'user_type': user.role,
@@ -367,14 +345,14 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
 
 class ProfileCompleteView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            token_string = request.META.get('HTTP_AUTHORIZATION')
-            token_key = token_string.partition(' ')[2]
-            token = Token.objects.get(key=token_key)
-            user_payment = UserPaymentMethod.objects.filter(user=token.user)
+            # token_string = request.META.get('HTTP_AUTHORIZATION')
+            # token_key = token_string.partition(' ')[2]
+            # token = Token.objects.get(key=token_key)
+            user_payment = UserPaymentMethod.objects.filter(user=request.user)
             if user_payment:
                 is_profile_completed = True
             else:
@@ -439,7 +417,7 @@ class OrderHistoryView(APIView, ResponseViewMixin):
     customer = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Customer ID",
                                  type=openapi.TYPE_STRING)
 
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer])
+    @swagger_auto_schema(tags=['user'], manual_parameters=[customer])
     def get(self, request):
         try:
             customer = Customer.objects.get(id=request.GET.get('customer_id'))

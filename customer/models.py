@@ -1,6 +1,8 @@
 from django.contrib.gis.db import models
-from user.models import AuditedModel, AppUser
+from user.models import AuditedModel, AppUser, PAYMENT_CHOICES, Shop
 from utilities.utils import Kw, Konstants
+from product.models import Product
+
 
 ADDRESS_TYPES = Konstants(
     Kw(home=1, label='Home'),
@@ -9,7 +11,23 @@ ADDRESS_TYPES = Konstants(
 )
 
 
-class Customer(AuditedModel, models.Model):
+ORDER_STATUS = Konstants(
+    Kw(pending=1, label='Pending'),
+    Kw(accepted=2, label='Accepted'),
+    Kw(rejected=3, label='Rejected'),
+    Kw(ready_for_pickup=4, label='Ready for pickup'),
+    Kw(delivered=5, label='Delivered'),
+)
+
+
+PAYMENT_STATUS = Konstants(
+    Kw(pending=1, label='Pending'),
+    Kw(completed=2, label='Completed'),
+    Kw(failed=3, label='Failed'),
+)
+
+
+class Customer(models.Model):
     user = models.OneToOneField(AppUser, related_name='customer', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -17,7 +35,7 @@ class Customer(AuditedModel, models.Model):
 
 
 class Address(AuditedModel, models.Model):
-    customer = models.OneToOneField(Customer, related_name='customer_addresses', on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, related_name='customer_addresses', on_delete=models.CASCADE)
     address = models.TextField(blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -25,3 +43,40 @@ class Address(AuditedModel, models.Model):
     location = models.PointField(blank=True, null=True)
     locality = models.CharField(max_length=30, blank=True, null=True)
     address_type = models.IntegerField(choices=ADDRESS_TYPES.choices(), default=ADDRESS_TYPES.home)
+
+
+class Order(AuditedModel, models.Model):
+    sub_total = models.FloatField(max_length=100, blank=True, null=True)
+    vat = models.FloatField(max_length=100, blank=True, null=True)
+    total_amount = models.FloatField(max_length=100, blank=True, null=True)
+    discount = models.FloatField(max_length=100, blank=True, null=True)
+    grand_total = models.FloatField(max_length=100, blank=True, null=True)
+    paid = models.FloatField(max_length=100, blank=True, null=True)
+    due = models.FloatField(max_length=100, blank=True, null=True)
+    payment_type = models.IntegerField(choices=PAYMENT_CHOICES.choices(), blank=True, null=True)
+    payment_status = models.IntegerField(choices=PAYMENT_STATUS.choices(), blank=True, null=True)
+    status = models.IntegerField(choices=ORDER_STATUS.choices(), blank=True, null=True)
+    shop = models.ForeignKey(Shop, related_name='shop_orders', on_delete=models.CASCADE, blank=True, null=True)
+    customer = models.ForeignKey(Customer, related_name='customer_orders', on_delete=models.CASCADE,
+                                 blank=True, null=True)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class OrderItem(AuditedModel, models.Model):
+    order_id = models.ForeignKey(Order, related_name='order_items', on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    quantity = models.IntegerField(blank=True, null=True)
+    rate = models.FloatField(max_length=100, blank=True, null=True)
+    total = models.FloatField(max_length=100, blank=True, null=True)
+    # status = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.product_id)
+
+
+class CustomerFavouriteProduct(AuditedModel, models.Model):
+    product = models.ForeignKey(Product, related_name='product_favourites', on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, related_name='customer_favoutites', on_delete=models.CASCADE)

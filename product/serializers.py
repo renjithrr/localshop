@@ -1,6 +1,8 @@
-from rest_framework import serializers
-from product.models import Product, ProductVarient, Order, OrderItem, ProductImage, ProductVarientImage
 from django.db.models import Sum
+from rest_framework import serializers
+
+from product.models import Product, ProductVarient, ProductImage, ProductVarientImage
+from customer.models import Order, OrderItem
 
 
 class ProductSerializer(serializers.ModelSerializer):

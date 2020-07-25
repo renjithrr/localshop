@@ -1,14 +1,12 @@
 import logging
 import io
 import csv
-import json
-from datetime import date, timedelta, datetime
-from django.contrib.auth import authenticate
-# from django.forms import modelformset_factory
+
+from datetime import date, timedelta
 from django.db.models import Sum
 from django.db.models import Q
-from django.forms.models import modelformset_factory
-from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
+
+from rest_framework.parsers import MultiPartParser, FileUploadParser
 
 from rest_framework.views import APIView
 from rest_framework. viewsets import GenericViewSet
@@ -21,11 +19,10 @@ from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
 from utilities.utils import BulkCreateManager
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
-    ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer,\
-    ProductUpdateSerializer, ProductImageSerializer
-from product.models import Product, ProductVarientImage, ProductVarient, Category, UNIT_CHOICES,\
-    OrderItem, Order, ORDER_STATUS, PAYMENT_STATUS, ProductImage, ProductVarientImage
-from product.forms import VarientImageForm, PhotoForm
+    ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
+from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
+    ORDER_STATUS, PAYMENT_STATUS, ProductImage, ProductVarientImage
+from customer.models import Order, OrderItem
 from user.models import Shop
 from user.serializers import ProfileSerializer
 

@@ -1,4 +1,5 @@
 INVALID_CREDENTIALS = 'Invalid Credentials'
+OTP_SENT = 'An otp has sent to the given number for verification'
 AUTHENTICATION_SUCCESSFUL = 'Successful Authentication'
 PROVIDE_AUTHENTICATION_CREDENTIALS = 'Please provide both username and password'
 GENERAL_ERROR = 'Something went wrong. Please try again later'
