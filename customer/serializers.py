@@ -67,7 +67,7 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
         return ADDRESS_TYPES.get_label(obj.address_type)
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class CustomerProductSerializer(serializers.ModelSerializer):
     varients = serializers.SerializerMethodField('get_varients')
     product_images = serializers.SerializerMethodField('get_product_images')
 

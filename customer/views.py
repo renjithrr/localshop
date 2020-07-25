@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
-from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer,\
-    ProductSerializer
+from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
+    CustomerProductSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
@@ -138,12 +138,12 @@ class ProductListing(APIView, ResponseViewMixin):
                                  type=openapi.TYPE_STRING)
 
     @swagger_auto_schema(tags=['customer'], manual_parameters=[customer],
-                         responses={'500': GENERAL_ERROR, '200': ProductSerializer})
+                         responses={'500': GENERAL_ERROR, '200': CustomerProductSerializer})
     def get(self, request):
         try:
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
             products = shop.shop_products.all()
-            serializer = ProductSerializer(products, many=True)
+            serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
                                                },
