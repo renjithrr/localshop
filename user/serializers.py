@@ -80,7 +80,7 @@ class UserPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserPaymentMethod
-        fields = ['id', 'payment_method']
+        fields = ['payment_method']
 
     # def get_payment_method_label(self, obj):
     #     return obj.payment_method.
