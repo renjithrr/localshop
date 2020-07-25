@@ -92,7 +92,8 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
     def get_queryset(self):
         pass
 
-    @swagger_auto_schema(tags=['customer'], request_body=CustomerAddressSerializer)
+    @swagger_auto_schema(tags=['customer'], request_body=CustomerAddressSerializer,
+                         responses={'500': GENERAL_ERROR, '200': CustomerAddressSerializer})
     def create(self, request):
         try:
             address = Address.objects.get(id=request.data.get('id'))
@@ -136,7 +137,8 @@ class ProductListing(APIView, ResponseViewMixin):
     customer = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
                                  type=openapi.TYPE_STRING)
 
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer])
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer],
+                         responses={'500': GENERAL_ERROR, '200': ProductSerializer})
     def get(self, request):
         try:
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
