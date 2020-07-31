@@ -2,7 +2,7 @@ from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
 
 from user.models import Shop, DeliveryOption
-from product.models import Product, ProductVarientImage, ProductImage
+from product.models import Product, ProductVarientImage, ProductImage, ProductVarient
 from customer.models import Address, ADDRESS_TYPES, Order, OrderItem
 
 
@@ -68,24 +68,38 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
 
 
 class CustomerProductSerializer(serializers.ModelSerializer):
-    varients = serializers.SerializerMethodField('get_varients')
+    # varients = serializers.SerializerMethodField('get_varients')
     product_images = serializers.SerializerMethodField('get_product_images')
 
     class Meta:
         model = Product
         fields = ['id', 'name', 'brand', 'size', 'color', 'quantity', 'mrp', 'offer_prize', 'lowest_selling_rate',
-                  'highest_selling_rate', 'varients', 'product_images']
+                  'highest_selling_rate', 'product_images']
 
-    def get_varients(self, obj):
-        varients = obj.product_varients.all()
-        return [{'name': obj.name, 'category': obj.category.id, 'size': varient.size, 'color':varient.color,
-                 'quantity':varient.quantity, 'description': varient.description, 'brand': varient.brand,
-                 'moq': varient.moq, 'offer_prize': varient.offer_prize,
-                 'lowest_selling_rate': varient.lowest_selling_rate, 'mrp': varient.mrp,
-                 'highest_selling_rate': varient.highest_selling_rate, 'hsn_code': obj.hsn_code,
-                 'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id,
-                 'images': [{'id': image.id, 'image_url': image.image.url}
-                  for image in ProductVarientImage.objects.filter(varient=varient)]} for varient in varients]
+    # def get_varients(self, obj):
+    #     varients = obj.product_varients.all()
+    #     return [{'name': obj.name, 'category': obj.category.id, 'size': varient.size, 'color':varient.color,
+    #              'quantity':varient.quantity, 'description': varient.description, 'brand': varient.brand,
+    #              'moq': varient.moq, 'offer_prize': varient.offer_prize,
+    #              'lowest_selling_rate': varient.lowest_selling_rate, 'mrp': varient.mrp,
+    #              'highest_selling_rate': varient.highest_selling_rate, 'hsn_code': obj.hsn_code,
+    #              'tax_rate': varient.tax_rate, 'unit': varient.unit, 'id': varient.id,
+    #              'images': [{'id': image.id, 'image_url': image.image.url}
+    #               for image in ProductVarientImage.objects.filter(varient=varient)]} for varient in varients]
 
     def get_product_images(self, obj):
         return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]
+
+
+class VarientSerializer(serializers.ModelSerializer):
+    images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductVarient
+        fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',
+                  'lowest_selling_rate', 'highest_selling_rate', 'tax_rate', 'moq', 'unit', 'images']
+
+
+    def get_images(self, obj):
+        return [{'id': image.id, 'image_url': image.image.url}
+                for image in ProductVarientImage.objects.filter(varient=obj)]

@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 from customer.views import NearbyShop, CommonParamsView, OrderHistoryView, CustomerAddressView, ProductListing, \
-    CustomerSignup, AccountEditView, CustomerFavouriteView
+    CustomerSignup, AccountEditView, CustomerFavouriteView, ProductVarientView
 
 router.register(r'address', CustomerAddressView, basename='product-pricing')
 
@@ -18,4 +18,6 @@ urlpatterns = [
     path('signup', CustomerSignup.as_view()),
     path('edit-account', AccountEditView.as_view()),
     path('favourite', CustomerFavouriteView.as_view()),
+    path('product-varients', ProductVarientView.as_view()),
+
 ]

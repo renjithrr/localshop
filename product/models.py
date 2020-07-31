@@ -100,6 +100,7 @@ class ProductVarient(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden= models.BooleanField(default=False)
+    shop = models.ManyToManyField(Shop, related_name='shop_product_varients', blank=True, null=True)
 
 
 class ProductVarientImage(models.Model):

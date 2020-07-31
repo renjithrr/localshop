@@ -17,7 +17,7 @@ from drf_yasg.utils import swagger_auto_schema
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
-from utilities.utils import BulkCreateManager
+from utilities.utils import BulkCreateManager, download_excel_data
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
@@ -294,6 +294,23 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
         except Exception as e:
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class DownloadProductDataCsvView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    test_param = openapi.Parameter('shop', openapi.IN_QUERY, description="Download CSV file for a shop",
+                                   type=openapi.TYPE_INTEGER)
+
+    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    def get(self, request):
+        try:
+            shop = request.GET.get('shop', '')
+            shop = Shop.objects.get(id=shop)
+            return download_excel_data(shop)
+
+        except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class ProductParamsvView(APIView, ResponseViewMixin):
