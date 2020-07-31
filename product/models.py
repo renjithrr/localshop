@@ -69,7 +69,7 @@ class Product(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden = models.BooleanField(default=False)
-    shop = models.ManyToManyField(Shop, related_name='shop_products', blank=True, null=True)
+    shop = models.ForeignKey(Shop, related_name='shop_products', blank=True, null=True, on_delete=models.CASCADE)
 
 
     def __str__(self):
@@ -100,7 +100,7 @@ class ProductVarient(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden= models.BooleanField(default=False)
-    shop = models.ManyToManyField(Shop, related_name='shop_product_varients', blank=True, null=True)
+    shop = models.ForeignKey(Shop, related_name='shop_product_varients', blank=True, null=True, on_delete=models.CASCADE)
 
 
 class ProductVarientImage(models.Model):

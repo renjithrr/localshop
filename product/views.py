@@ -17,7 +17,7 @@ from drf_yasg.utils import swagger_auto_schema
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
-from utilities.utils import BulkCreateManager, download_excel_data
+from utilities.utils import BulkCreateManager, download_excel_data, export_to_csv
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
@@ -54,7 +54,8 @@ class ProductView(APIView, ResponseViewMixin):
                         pass
             try:
                 shop = Shop.objects.get(user=request.user)
-                product.shop.add(shop)
+                product.shop = shop
+                product.save()
             except Exception as e:
                 pass
 
@@ -184,6 +185,12 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                 serializer = ProductVarientSerializer(data=request.data)
             if serializer.is_valid():
                 varient = serializer.save()
+                try:
+                    shop = Shop.objects.get(user=request.user)
+                    varient.shop = shop
+                    varient.save()
+                except Exception as e:
+                    pass
                 # ImageFormSet = modelformset_factory(ProductVarientImage,
                 #                                     form=VarientImageForm, extra=3)
                 # formset = ImageFormSet(request.POST, request.FILES,
@@ -270,24 +277,25 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
             next(io_string)
             bulk_mgr = BulkCreateManager(chunk_size=20)
             for row in csv.reader(io_string, delimiter=',', quotechar="|"):
-                # print(row[0])
+                print(row)
                 category = Category.objects.filter(name__icontains=row[1]).last()
                 existing_product = Product.objects.filter(hsn_code=row[11])
                 if existing_product:
                     update_values = {'name': row[0], 'category': category, 'size': row[2], 'color': row[3],
                                      'quantity': row[4], 'description': row[5], 'brand': row[6], 'mrp': row[7],
                                      'offer_prize': row[8], 'lowest_selling_rate': row[9],
-                                     'highest_selling_rate': row[10], 'tax_rate': row[12], 'moq': row[13],
-                                     'unit': row[14]
+                                     'highest_selling_rate': row[10],'product_id': row[12], 'tax_rate': row[13],
+                                     'moq': row[14], 'unit': row[15]
                                      }
                     existing_product.update(**update_values)
 
                 else:
+                    shop = Shop.objects.filter(user=request.user).last()
                     bulk_mgr.add(Product(name=row[0], category=category,
                                          size=row[2], color=row[3], quantity=row[4],description=row[5],
                                          brand=row[6], mrp=row[7], offer_prize=row[8], lowest_selling_rate=row[9],
-                                         highest_selling_rate=row[10], hsn_code=row[11],
-                                         tax_rate=row[12], moq=row[13], unit=row[14]))
+                                         highest_selling_rate=row[10], hsn_code=row[11], product_id=row[12],
+                                         tax_rate=row[13], moq=row[14], unit=row[15], shop=shop))
             bulk_mgr.done()
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
@@ -297,17 +305,11 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
 
 
 class DownloadProductDataCsvView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
-
-    test_param = openapi.Parameter('shop', openapi.IN_QUERY, description="Download CSV file for a shop",
-                                   type=openapi.TYPE_INTEGER)
-
-    @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
-            shop = request.GET.get('shop', '')
-            shop = Shop.objects.get(id=shop)
-            return download_excel_data(shop)
+            shop = Shop.objects.filter(user=request.user).last()
+            return export_to_csv(shop)
 
         except Exception as e:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

@@ -1,6 +1,7 @@
 import math, random
 import boto3
 import xlwt
+import csv
 
 from collections import defaultdict
 from django.apps import apps
@@ -127,7 +128,7 @@ def download_excel_data(shop):
     response = HttpResponse(content_type='application/ms-excel')
 
     #decide file name
-    response['Content-Disposition'] = 'attachment; filename="product_upload.xls"'
+    response['Content-Disposition'] = 'attachment; filename="product_upload.xlsx"'
 
     #creating workbook
     wb = xlwt.Workbook(encoding='utf-8')
@@ -177,4 +178,26 @@ def download_excel_data(shop):
 
 
     wb.save(response)
+    return response
+
+
+def export_to_csv(shop):
+    # The only line to customize
+
+    columns = ['Name', 'Category', 'Size', 'Color', 'Quantity', 'Description', 'Brand', 'MRP', 'Offer Prize',
+               'Lowest selling rate', 'Highest selling rate', 'HSN code', 'Product code', 'Tax rate', 'MOQ', 'Unit']
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="product_upload_data.csv"'
+    writer = csv.writer(response)
+
+    writer.writerow(columns)
+    data = shop.shop_products.all()
+    for my_row in data:
+        output = [my_row.name, my_row.category.name, my_row.size, my_row.color, my_row.quantity,
+                       my_row.description, my_row.brand, my_row.mrp, my_row.offer_prize,
+                       my_row.lowest_selling_rate, my_row.highest_selling_rate, my_row.hsn_code, my_row.product_id,
+                  my_row.tax_rate, my_row.moq, my_row.unit]
+        row = writer.writerow(output)
+
     return response
