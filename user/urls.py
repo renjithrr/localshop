@@ -8,6 +8,9 @@ router.register(r'location-info', LocationDataView, basename='location-data')
 router.register(r'account-details', AccountDetailsView, basename='account-data')
 router.register(r'payment-methods', PaymentMethodView, basename='payment-methods')
 router.register(r'delivery-option', DeliveryOptionView, basename='account-data')
+router.register(r'order-history', ShopOrderHistoryView, basename='order-history')
+
+pending_order_list = ShopOrderHistoryView.as_view({'get': 'list'})
 
 create_shop_detail = ShopDetailsView.as_view({'post': 'create'})
 retrieve_shop_detail = ShopDetailsView.as_view({'get': 'retrieve'})
@@ -39,7 +42,8 @@ urlpatterns = [
     # path('payment-methods/', PaymentMethodView.as_view()),
     path('is-profile-completed/', ProfileCompleteView.as_view()),
     path('profile/', UserProfleView.as_view()),
-    path('order-history/', OrderHistoryView.as_view()),
+    path('availability/', ShopAvailabilityView.as_view()),
+    # path('order-history/', ShopOrderHistoryView.as_view()),
     # path('delivery-option/', DeliveryOptionView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]

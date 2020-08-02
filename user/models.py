@@ -106,6 +106,7 @@ class Shop(AuditedModel, models.Model):
     image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     rating = models.FloatField(default=5)
+    available = models.BooleanField(default=True)
 
     def __str__(self):
         return self.shop_name

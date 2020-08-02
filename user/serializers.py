@@ -69,7 +69,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['id', 'shop_name', 'gst_reg_number', 'opening', 'closing', 'image', 'logo', 'non_gst',
-                  'shop_category']
+                  'shop_category', 'available']
 
     def get_non_gst(self, obj):
         return False if obj.gst_reg_number else True

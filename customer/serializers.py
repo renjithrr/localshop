@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
+from django.db.models import Sum
 
 from user.models import Shop, DeliveryOption
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient
@@ -103,3 +104,18 @@ class VarientSerializer(serializers.ModelSerializer):
     def get_images(self, obj):
         return [{'id': image.id, 'image_url': image.image.url}
                 for image in ProductVarientImage.objects.filter(varient=obj)]
+
+
+class OrderHistorySerializer(serializers.ModelSerializer):
+    order_items = serializers.SerializerMethodField('get_order_items')
+    total_amount = serializers.SerializerMethodField('get_total_amount')
+
+    class Meta:
+        model = Order
+        fields = ['id', 'order_items', 'total_amount']
+
+    def get_order_items(self, obj):
+        return list(OrderItem.objects.filter(order_id=obj).values_list('product_id__name', flat=True))
+
+    def get_total_amount(self, obj):
+        return OrderItem.objects.filter(order_id=obj).aggregate(Sum('total'))['total__sum']

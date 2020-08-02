@@ -11,12 +11,15 @@ from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_NOT_REGISTERED
 from utilities.utils import OTPgenerator, deliver_sms
-
+from utilities.pagination import CustomOffsetPagination
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod, DeliveryOption
 
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
     DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
+from customer.serializers import OrderHistorySerializer
+from product.models import ORDER_STATUS
+from customer.models import Order
 
 
 class VerifyMobileNumberView(APIView, ResponseViewMixin):
@@ -428,21 +431,55 @@ class UserProfleView(APIView, ResponseViewMixin):
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
-class OrderHistoryView(APIView, ResponseViewMixin):
+class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
     permission_classes = [AllowAny]
+    serializer_class = OrderHistorySerializer
+    pagination_class = CustomOffsetPagination
 
-    customer = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Customer ID",
-                                 type=openapi.TYPE_STRING)
-
-    @swagger_auto_schema(tags=['user'], manual_parameters=[customer])
-    def get(self, request):
+    def get_queryset(self):
+        pass
+    # test_param = openapi.Parameter('search', openapi.IN_QUERY, description="search product by key",
+    #                                type=openapi.TYPE_STRING)
+    #
+    # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
+    def list(self, request, *args, **kwargs):
         try:
-            customer = Customer.objects.get(id=request.GET.get('customer_id'))
-            orders = customer.customer_orders
-            serializer = CustomerOrderSerializer(orders, many=True)
+            delivered_orders = Order.objects.filter(status=ORDER_STATUS.delivered)
+            # if 'search' in request.GET:
+            #    search_term = request.GET.get('search')
+            #    products = products.filter(name__icontains=search_term)
+            delivered_orders = self.paginate_queryset(delivered_orders)
+            order_Serializer = OrderHistorySerializer(delivered_orders, many=True)
+            response = order_Serializer.data
             return self.success_response(code='HTTP_200_OK',
-                                         data={'orders': serializer.data,
-                                               },
+                                         data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+
+class ShopAvailabilityView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'available': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+        }))
+    def post(self, request):
+        available = request.data.get('available')
+        try:
+            shop = Shop.objects.get(user=request.user)
+            if available:
+                shop.available = True
+            else:
+                shop.available = False
+            shop.save()
+            return self.success_response(code='HTTP_200_OK', message=SUCCESS,
+                                         data={'available': shop.available})
+
+        except Exception as e:
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
