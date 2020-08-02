@@ -16,8 +16,8 @@ from drf_yasg.utils import swagger_auto_schema
 
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
-from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS
-from utilities.utils import BulkCreateManager, download_excel_data, export_to_csv
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS, PRODUCT_CODE_EXISTS
+from utilities.utils import BulkCreateManager, export_to_csv, id_generator
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
@@ -37,10 +37,16 @@ class ProductView(APIView, ResponseViewMixin):
                 product = Product.objects.get(id=request.data.get('id'))
                 serializer = ProductSerializer(instance=product, data=request.data)
             except Product.DoesNotExist:
+                try:
+                    if request.data.get('product_id'):
+                        product = Product.objects.get(product_id=request.data.get('product_id'))
+                        if product:
+                            return self.error_response(code='HTTP_400_BAD_REQUEST', message=PRODUCT_CODE_EXISTS)
+                except Exception as e:
+                    pass
                 serializer = ProductSerializer(data=request.data)
             if serializer.is_valid():
                 product = serializer.save()
-                product.save()
             if request.data.get('image_ids', ''):
                 existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''))
                 if existing_images:
@@ -52,6 +58,14 @@ class ProductView(APIView, ResponseViewMixin):
                         image.save()
                     except Exception as e:
                         pass
+            try:
+                if not request.data.get('product_id'):
+                    product_id = id_generator()
+                    product.product_id = product_id
+                    product.save()
+            except Exception as e:
+                pass
+
             try:
                 shop = Shop.objects.get(user=request.user)
                 product.shop = shop
