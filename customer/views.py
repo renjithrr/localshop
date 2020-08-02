@@ -211,6 +211,7 @@ class AccountEditView(APIView, ResponseViewMixin):
                 user.mobile_number = mobile_number
             else:
                 user.email = request.data.get('mobile_number')
+                user.first_name = request.data.get('name')
             user.save()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
                                          data={'user_id': user.id,

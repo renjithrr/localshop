@@ -7,3 +7,5 @@ DATA_SAVED_SUCCESSFULLY = 'Data saved successfully'
 INVALID_OTP = 'Invalid OTP'
 SUCCESS = 'Success'
 NOT_A_CSV_FORMAT = 'Not a CSV format'
+USER_ALREADY_REGISTERED = 'Already a registered member'
+

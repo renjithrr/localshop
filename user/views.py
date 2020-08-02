@@ -9,7 +9,7 @@ from drf_yasg import openapi
 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
-from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_ALREADY_REGISTERED
 from utilities.utils import OTPgenerator, deliver_sms
 
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
@@ -33,13 +33,21 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
         try:
             if request.data.get('is_customer', ' '):
                 role = USER_TYPE_CHOICES.customer
+                user, created = AppUser.objects.get_or_create(
+                    username=mobile_number,
+                    mobile_number=mobile_number,
+                    defaults={'role': role, 'is_active': False},
+                )
+                if not created:
+                    return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_ALREADY_REGISTERED)
+
             else:
                 role = USER_TYPE_CHOICES.vendor
-            user, created = AppUser.objects.get_or_create(
-                username=mobile_number,
-                mobile_number=mobile_number,
-                defaults={'role': role, 'is_active': False},
-            )
+                user, created = AppUser.objects.get_or_create(
+                    username=mobile_number,
+                    mobile_number=mobile_number,
+                    defaults={'role': role, 'is_active': False},
+                )
             if user:
                 otp = OTPgenerator()
                 deliver_sms(mobile_number, otp)
@@ -85,7 +93,9 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
                                              data={'user_id': user.id,
                                                    'user_type': user.role,
                                                    'token': token.key,
-                                                   'is_profile_completed': is_profile_completed
+                                                   'is_profile_completed': is_profile_completed,
+                                                   'name': user.first_name if user.first_name else  '',
+                                                   'email': user.email if user.email else ''
                                                    })
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=INVALID_OTP)
@@ -159,6 +169,9 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 if request.FILES.get('gst_image', ''):
                     shop.gst_image = request.FILES['gst_image']
                 shop.save()
+                if request.data.get('email', ''):
+                    shop.user.email = request.data.get('email', '')
+                    shop.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
