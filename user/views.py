@@ -38,7 +38,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                     mobile_number=mobile_number,
                     defaults={'role': role, 'is_active': False},
                 )
-                if created:
+                if created or not user.is_active:
                     return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_NOT_REGISTERED)
 
             else:
@@ -412,11 +412,15 @@ class UserProfleView(APIView, ResponseViewMixin):
             image_data = request.data.get('is_profile_image')
             if image_data == 'true':
                 shop.image = request.FILES.get('image')
+                shop.save()
+                image_url = shop.image.url
             else:
                 shop.logo = request.FILES.get('image')
-            shop.save()
+                shop.save()
+                image_url = shop.logo.url
+
             return self.success_response(code='HTTP_200_OK',
-                                         data={'image_url': shop.image.url},
+                                         data={'image_url': image_url},
                                          message=SUCCESS)
 
         except Exception as e:
