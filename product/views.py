@@ -304,11 +304,17 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
                     existing_product.update(**update_values)
 
                 else:
+                    product_id = row[0]
+                    try:
+                        if not product_id:
+                            product_id = id_generator()
+                    except Exception as e:
+                        pass
                     shop = Shop.objects.filter(user=request.user).last()
                     bulk_mgr.add(Product(name=row[1], category=category,
                                          size=row[3], color=row[4], quantity=row[5],description=row[6],
                                          brand=row[7], mrp=row[8], offer_prize=row[9], lowest_selling_rate=row[10],
-                                         highest_selling_rate=row[11], hsn_code=row[12], product_id=row[0],
+                                         highest_selling_rate=row[11], hsn_code=row[12], product_id=product_id,
                                          tax_rate=row[13], moq=row[14], unit=row[15], shop=shop))
             bulk_mgr.done()
             return self.success_response(code='HTTP_200_OK',
