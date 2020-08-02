@@ -165,22 +165,17 @@ class CustomerSignup(APIView, ResponseViewMixin):
     def post(self, request):
         mobile_number = request.data.get('mobile_number')
         try:
-            if request.data.get('is_customer', ' '):
-                role = USER_TYPE_CHOICES.customer
-            else:
-                role = USER_TYPE_CHOICES.vendor
-            user, created = AppUser.objects.get_or_create(
+            user= AppUser.objects.get(
                 username=mobile_number,
                 mobile_number=mobile_number,
-                defaults={'role': role, 'is_active': False, 'email': request.data.get('email'),
-                          'first_name': request.data.get('name')},
             )
             Customer.objects.get_or_create(user=user)
-            if created:
-                otp = OTPgenerator()
-                deliver_sms(mobile_number, otp)
-                user.verification_otp = otp
-                user.save()
+            otp = OTPgenerator()
+            deliver_sms(mobile_number, otp)
+            user.verification_otp = otp
+            user.email = request.data.get('email')
+            user.first_name = request.data.get('name')
+            user.save()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
                                          data={'user_id': user.id,
                                                'user_type': user.role
@@ -204,7 +199,7 @@ class AccountEditView(APIView, ResponseViewMixin):
         mobile_number = request.data.get('mobile_number')
         try:
             user = AppUser.objects.get(id=request.user.id)
-            if user.mobile_number != mobile_number or not user.is_active:
+            if user.mobile_number != mobile_number:
                 otp = OTPgenerator()
                 deliver_sms(mobile_number, otp)
                 user.verification_otp = otp
