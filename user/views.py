@@ -9,7 +9,7 @@ from drf_yasg import openapi
 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
-from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_ALREADY_REGISTERED
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_NOT_REGISTERED
 from utilities.utils import OTPgenerator, deliver_sms
 
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
@@ -36,10 +36,10 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 user, created = AppUser.objects.get_or_create(
                     username=mobile_number,
                     mobile_number=mobile_number,
-                    defaults={'role': role},
+                    defaults={'role': role, 'is_active': False},
                 )
-                if not created and user.is_active:
-                    return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_ALREADY_REGISTERED)
+                if created:
+                    return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_NOT_REGISTERED)
 
             else:
                 role = USER_TYPE_CHOICES.vendor

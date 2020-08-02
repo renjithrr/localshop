@@ -204,14 +204,13 @@ class AccountEditView(APIView, ResponseViewMixin):
         mobile_number = request.data.get('mobile_number')
         try:
             user = AppUser.objects.get(id=request.user.id)
-            if user.mobile_number != mobile_number:
+            if user.mobile_number != mobile_number or not user.is_active:
                 otp = OTPgenerator()
                 deliver_sms(mobile_number, otp)
                 user.verification_otp = otp
                 user.mobile_number = mobile_number
-            else:
-                user.email = request.data.get('mobile_number')
-                user.first_name = request.data.get('name')
+            user.email = request.data.get('email')
+            user.first_name = request.data.get('name')
             user.save()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
                                          data={'user_id': user.id,
