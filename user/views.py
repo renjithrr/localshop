@@ -36,9 +36,9 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 user, created = AppUser.objects.get_or_create(
                     username=mobile_number,
                     mobile_number=mobile_number,
-                    defaults={'role': role, 'is_active': False},
+                    defaults={'role': role},
                 )
-                if not created:
+                if not created and user.is_active:
                     return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_ALREADY_REGISTERED)
 
             else:
