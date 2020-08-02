@@ -181,23 +181,28 @@ def download_excel_data(shop):
     return response
 
 
-def export_to_csv(shop):
+def export_to_csv(shop, sample):
     # The only line to customize
 
-    columns = ['Name', 'Category', 'Size', 'Color', 'Quantity', 'Description', 'Brand', 'MRP', 'Offer Prize',
-               'Lowest selling rate', 'Highest selling rate', 'HSN code', 'Product code', 'Tax rate', 'MOQ', 'Unit']
+    columns = ['Product code', 'Name', 'Category', 'Size', 'Color', 'Quantity', 'Description', 'Brand', 'MRP',
+               'Offer Prize', 'Lowest selling rate', 'Highest selling rate', 'HSN code', 'Tax rate', 'MOQ', 'Unit']
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="product_upload_data.csv"'
     writer = csv.writer(response)
 
     writer.writerow(columns)
-    data = shop.shop_products.all()
-    for my_row in data:
-        output = [my_row.name, my_row.category.name, my_row.size, my_row.color, my_row.quantity,
-                       my_row.description, my_row.brand, my_row.mrp, my_row.offer_prize,
-                       my_row.lowest_selling_rate, my_row.highest_selling_rate, my_row.hsn_code, my_row.product_id,
-                  my_row.tax_rate, my_row.moq, my_row.unit]
+    if not sample:
+        output = ['ACD123CA', 'Mattress', 'Home improvement', '4*25*35', 'Red', '5', 'mattresses', 'Wakefit', '5000',
+                  '4500', '4500', '5000', 'HSN_CODE', '2.5', 1, 'number']
         row = writer.writerow(output)
+    else:
+        data = shop.shop_products.all()
+        for my_row in data:
+            output = [my_row.product_id, my_row.name, my_row.category.name, my_row.size, my_row.color, my_row.quantity,
+                           my_row.description, my_row.brand, my_row.mrp, my_row.offer_prize,
+                           my_row.lowest_selling_rate, my_row.highest_selling_rate, my_row.hsn_code,
+                      my_row.tax_rate, my_row.moq, my_row.unit]
+            row = writer.writerow(output)
 
     return response

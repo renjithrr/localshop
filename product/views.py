@@ -260,7 +260,7 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
 
 
 class ProductDataCsvView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     test_param = openapi.Parameter('file', openapi.IN_QUERY, description="Upload CSV file for product update",
                                    type=openapi.TYPE_FILE)
@@ -278,23 +278,23 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
             bulk_mgr = BulkCreateManager(chunk_size=20)
             for row in csv.reader(io_string, delimiter=',', quotechar="|"):
                 print(row)
-                category = Category.objects.filter(name__icontains=row[1]).last()
-                existing_product = Product.objects.filter(hsn_code=row[11])
+                category = Category.objects.filter(name__icontains=row[2]).last()
+                existing_product = Product.objects.filter(product_id=row[0])
                 if existing_product:
-                    update_values = {'name': row[0], 'category': category, 'size': row[2], 'color': row[3],
-                                     'quantity': row[4], 'description': row[5], 'brand': row[6], 'mrp': row[7],
-                                     'offer_prize': row[8], 'lowest_selling_rate': row[9],
-                                     'highest_selling_rate': row[10],'product_id': row[12], 'tax_rate': row[13],
+                    update_values = {'name': row[1], 'category': category, 'size': row[3], 'color': row[4],
+                                     'quantity': row[5], 'description': row[6], 'brand': row[7], 'mrp': row[8],
+                                     'offer_prize': row[9], 'lowest_selling_rate': row[10],
+                                     'highest_selling_rate': row[11],'hsn_code': row[12], 'tax_rate': row[13],
                                      'moq': row[14], 'unit': row[15]
                                      }
                     existing_product.update(**update_values)
 
                 else:
                     shop = Shop.objects.filter(user=request.user).last()
-                    bulk_mgr.add(Product(name=row[0], category=category,
-                                         size=row[2], color=row[3], quantity=row[4],description=row[5],
-                                         brand=row[6], mrp=row[7], offer_prize=row[8], lowest_selling_rate=row[9],
-                                         highest_selling_rate=row[10], hsn_code=row[11], product_id=row[12],
+                    bulk_mgr.add(Product(name=row[1], category=category,
+                                         size=row[3], color=row[4], quantity=row[5],description=row[6],
+                                         brand=row[7], mrp=row[8], offer_prize=row[9], lowest_selling_rate=row[10],
+                                         highest_selling_rate=row[11], hsn_code=row[12], product_id=row[0],
                                          tax_rate=row[13], moq=row[14], unit=row[15], shop=shop))
             bulk_mgr.done()
             return self.success_response(code='HTTP_200_OK',
@@ -306,10 +306,14 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
 
 class DownloadProductDataCsvView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
+    is_sample = openapi.Parameter('is_sample', openapi.IN_QUERY, description="Sample CSV for vendors",
+                                   type=openapi.TYPE_BOOLEAN)
+    @swagger_auto_schema(tags=['product'], manual_parameters=[is_sample])
     def get(self, request):
         try:
+            sample = request.GET.get('is_sample')
             shop = Shop.objects.filter(user=request.user).last()
-            return export_to_csv(shop)
+            return export_to_csv(shop, sample)
 
         except Exception as e:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
