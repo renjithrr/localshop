@@ -96,7 +96,7 @@ def deliver_sms(mobile_number, otp):
         "pinpoint",
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
-        region_name="us-east-1"
+        region_name="ap-south-1"
     )
     try:
         response = client.send_messages(
@@ -112,7 +112,7 @@ def deliver_sms(mobile_number, otp):
                         'Body': 'Townie verification otp is ' + otp,
                         'Keyword': "keyword_555701130102",
                         'MessageType': "TRANSACTIONAL",
-                        'OriginationNumber': "+12515453033",
+                        'OriginationNumber': "+13474275421",
                         'SenderId': "Townie"
                     }
                 }
