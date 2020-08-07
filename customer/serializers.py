@@ -25,7 +25,7 @@ class NearbyShopSerializer(serializers.ModelSerializer):
 
     def get_distance(self, obj):
         location = self.context.get("location")
-        round(obj.location.distance(location) * 100, 2)
+        return round(obj.location.distance(location) * 100, 2)
 
     @staticmethod
     @swagger_serializer_method(serializer_or_field=DeliverySerializer(many=True))
@@ -75,7 +75,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'brand', 'size', 'color', 'quantity', 'mrp', 'offer_prize', 'lowest_selling_rate',
-                  'highest_selling_rate', 'product_images']
+                  'highest_selling_rate', 'product_images', 'shop']
 
     # def get_varients(self, obj):
     #     varients = obj.product_varients.all()

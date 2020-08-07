@@ -11,16 +11,17 @@ from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
-from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser
+from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData
 from customer.models import Customer, Address, CustomerFavouriteProduct
+from product.models import Product
 
 
 class NearbyShop(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    latitude = openapi.Parameter('search', openapi.IN_QUERY, description="latitude",
+    latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
                                    type=openapi.TYPE_STRING)
-    longitude = openapi.Parameter('all', openapi.IN_QUERY, description="longitude",
+    longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
                                     type=openapi.TYPE_STRING)
     shop_category = openapi.Parameter('shop_category', openapi.IN_QUERY, description="List all products",
                                     type=openapi.TYPE_STRING)
@@ -32,7 +33,8 @@ class NearbyShop(APIView, ResponseViewMixin):
             latitude = request.GET.get('latitude', 0)
             longitude = request.GET.get('longitude', 0)
             location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
-            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=5)))
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
             if request.GET.get('shop_category', ''):
                 query_set = query_set.filter(shop_category=request.GET.get('shop_category', ''))
             serializer = NearbyShopSerializer(query_set, context={'location': location}, many=True)
@@ -134,18 +136,32 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
 class ProductListing(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    customer = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
+    latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
                                  type=openapi.TYPE_STRING)
-
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer],
-                         responses={'500': GENERAL_ERROR, '200': CustomerProductSerializer})
+    longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+                                  type=openapi.TYPE_STRING)
+    search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[longitude, latitude, search])
     def get(self, request):
         try:
-            shop = Shop.objects.get(id=request.GET.get('shop_id'))
-            products = shop.shop_products.all()
-            serializer = CustomerProductSerializer(products, many=True)
+            latitude = request.GET.get('latitude', 0)
+            longitude = request.GET.get('longitude', 0)
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            if request.GET.get('search', ''):
+                searched_shops = shops.filter(business_name__icontains=request.GET.get('search', ''))
+                shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
+                products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
+                products = products.filter(name__icontains=request.GET.get('search', ''))
+
+                product_serializer = CustomerProductSerializer(products, many=True)
+                return self.success_response(code='HTTP_200_OK',
+                                             data={'products': product_serializer.data, 'shops': shop_serializer.data
+                                                   },
+                                         message=SUCCESS)
             return self.success_response(code='HTTP_200_OK',
-                                         data={'orders': serializer.data,
+                                         data={
                                                },
                                          message=SUCCESS)
         except Exception as e:
