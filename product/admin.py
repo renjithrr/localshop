@@ -55,7 +55,7 @@ class ProductAdmin(admin.ModelAdmin):
             self.message_user(request, str(e))
             return redirect("..")
 
-    list_display = ('name', 'category', 'size', 'mrp', 'status')
+    list_display = ('name', 'shop', 'category', 'size', 'mrp', 'status')
 
 
 class BrandAdmin(admin.ModelAdmin):
