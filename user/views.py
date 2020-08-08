@@ -86,9 +86,12 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
                 user.save()
                 if user.role == USER_TYPE_CHOICES.vendor:
                     try:
-                        UserPaymentMethod.objects.get(user=user)
-                        is_profile_completed = True
-                    except UserPaymentMethod.DoesNotExist:
+                        payment_method = UserPaymentMethod.objects.filter(user=user)
+                        if payment_method:
+                            is_profile_completed = True
+                        else:
+                            is_profile_completed = False
+                    except Exception as e:
                         is_profile_completed = False
                 else:
                     is_profile_completed = True
