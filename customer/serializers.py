@@ -2,36 +2,72 @@ from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
 from django.db.models import Sum
 
-from user.models import Shop, DeliveryOption
+from user.models import Shop, DeliveryOption, DELIVERY_CHOICES
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient
 from customer.models import Address, ADDRESS_TYPES, Order, OrderItem
 
 
-class DeliverySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DeliveryOption
-        fields = ['delivery_type', 'free_delivery', 'free_delivery_for']
+#
+# class DeliverySerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = DeliveryOption
+#         fields = ['delivery_type', 'free_delivery', 'free_delivery_for']
 
 
 class NearbyShopSerializer(serializers.ModelSerializer):
     distance = serializers.SerializerMethodField()
-    delivery_methods = serializers.SerializerMethodField(source='shop.shop_name')
+    # delivery_methods = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    pick_up = serializers.SerializerMethodField()
+    home_delivery = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
-        fields = ['id', 'shop_name', 'address', 'business_name', 'distance', 'image', 'logo', 'lat', 'long', 'rating',
-                  'delivery_methods']
+        fields = ['id', 'shop_name', 'address', 'business_name', 'distance', 'image', 'logo', 'lat', 'long', 'rating'
+            , 'category', 'pick_up', 'home_delivery']
 
     def get_distance(self, obj):
         location = self.context.get("location")
         return round(obj.location.distance(location) * 100, 2)
 
-    @staticmethod
-    @swagger_serializer_method(serializer_or_field=DeliverySerializer(many=True))
-    def get_delivery_methods(obj):
-        delivery_options = obj.shop_delivery_options.all()
-        return DeliverySerializer(delivery_options, many=True).data if delivery_options else []
+    def get_category(self, obj):
+        return {'id': obj.shop_category.id, 'name': obj.shop_category.name}
+
+    def get_pick_up(self, obj):
+        pickup = obj.shop_delivery_options.all()
+        pick_up = False
+        for value in pickup:
+            for data in value.delivery_type:
+                if int(data) == DELIVERY_CHOICES.pickup:
+                    pick_up = True
+                    break
+
+        return pick_up
+        # for i in obj.shop_delivery_options.all():
+        #     d = i.delivery_type
+        #     for j in d:
+        #         print(
+        #             j
+        #         )
+        # return True if pickup else False
+
+    def get_home_delivery(self, obj):
+        pickup = obj.shop_delivery_options.all()
+        pick_up = False
+        for value in pickup:
+            for data in value.delivery_type:
+                if int(data) == DELIVERY_CHOICES.shop_ship:
+                    pick_up = True
+                    break
+
+        return pick_up
+
+    # @staticmethod
+    # @swagger_serializer_method(serializer_or_field=DeliverySerializer(many=True))
+    # def get_delivery_methods(obj):
+    #     delivery_options = obj.shop_delivery_options.all()
+    #     return DeliverySerializer(delivery_options, many=True).data if delivery_options else []
 
 
 class OrderSerializer(serializers.ModelSerializer):
