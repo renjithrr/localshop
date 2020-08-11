@@ -21,6 +21,8 @@ from customer.serializers import OrderHistorySerializer
 from product.models import ORDER_STATUS
 from customer.models import Order
 
+db_logger = logging.getLogger('db')
+
 
 class VerifyMobileNumberView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
@@ -61,8 +63,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                                                'user_type': user.role
                                                })
         except Exception as e:
-            logging.exception(e)
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -107,7 +108,7 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=INVALID_OTP)
 
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -138,7 +139,7 @@ class AccountDetailsView(GenericViewSet, ResponseViewMixin):
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
             return self.success_response(code='HTTP_200_OK', message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            logging.exception(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
@@ -184,7 +185,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                                          data={'shop_id': shop.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            logging.exception(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
     def retrieve(self, request, pk=None):
@@ -220,7 +221,7 @@ class LocationDataView(GenericViewSet, ResponseViewMixin):
                                          data={'user_id': shop.user.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
@@ -278,8 +279,8 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
                                          data={'delivery_id': delivery.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
         try:
@@ -312,7 +313,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
@@ -338,7 +339,8 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class CommonParamsView(APIView, ResponseViewMixin):
@@ -360,6 +362,7 @@ class CommonParamsView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -381,7 +384,7 @@ class ProfileCompleteView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -402,7 +405,7 @@ class UserProfleView(APIView, ResponseViewMixin):
                                          message=SUCCESS)
 
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     @swagger_auto_schema(tags=['user'], request_body=openapi.Schema(
@@ -430,8 +433,8 @@ class UserProfleView(APIView, ResponseViewMixin):
                                          message=SUCCESS)
 
         except Exception as e:
-            print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
@@ -458,7 +461,7 @@ class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
                                          data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -484,5 +487,5 @@ class ShopAvailabilityView(APIView, ResponseViewMixin):
                                          data={'available': shop.available})
 
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

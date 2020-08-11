@@ -26,6 +26,8 @@ from customer.models import Order, OrderItem
 from user.models import Shop
 from user.serializers import ProfileSerializer
 
+db_logger = logging.getLogger('db')
+
 
 class ProductView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
@@ -43,6 +45,7 @@ class ProductView(APIView, ResponseViewMixin):
                         if product:
                             return self.error_response(code='HTTP_400_BAD_REQUEST', message=PRODUCT_CODE_EXISTS)
                 except Exception as e:
+                    db_logger.exception(e)
                     pass
                 serializer = ProductSerializer(data=request.data)
             if serializer.is_valid():
@@ -57,6 +60,7 @@ class ProductView(APIView, ResponseViewMixin):
                         image.product = product
                         image.save()
                     except Exception as e:
+                        db_logger.exception(e)
                         pass
             try:
                 if not request.data.get('product_id'):
@@ -64,6 +68,7 @@ class ProductView(APIView, ResponseViewMixin):
                     product.product_id = product_id
                     product.save()
             except Exception as e:
+                db_logger.exception(e)
                 pass
 
             try:
@@ -71,6 +76,7 @@ class ProductView(APIView, ResponseViewMixin):
                 product.shop = shop
                 product.save()
             except Exception as e:
+                db_logger.exception(e)
                 pass
 
             else:
@@ -79,8 +85,7 @@ class ProductView(APIView, ResponseViewMixin):
                                          data={'product_id': product.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
-            logging.exception(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -124,7 +129,7 @@ class ProductImageUploadView(APIView, ResponseViewMixin):
                                          message=SUCCESS)
 
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -164,8 +169,8 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
                                          data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
         try:
@@ -175,7 +180,8 @@ class  ProductListingView(GenericViewSet, ResponseViewMixin):
                                          data=serializer.data,
                                          message=SUCCESS)
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class ProductVarientView(GenericViewSet, ResponseViewMixin):
@@ -204,7 +210,7 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                     varient.shop = shop
                     varient.save()
                 except Exception as e:
-                    pass
+                    db_logger.exception(e)
                 # ImageFormSet = modelformset_factory(ProductVarientImage,
                 #                                     form=VarientImageForm, extra=3)
                 # formset = ImageFormSet(request.POST, request.FILES,
@@ -226,11 +232,11 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                         image.varient = varient
                         image.save()
                     except Exception as e:
-                        pass
+                        db_logger.exception(e)
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
@@ -262,7 +268,7 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                                 image.varient = varient
                                 image.save()
                             except Exception as e:
-                                pass
+                                db_logger.exception(e)
                     return self.success_response(code='HTTP_200_OK',
                                                      data=serializer.data,
                                                      message=SUCCESS)
@@ -270,6 +276,7 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
                     return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
             except Exception as e:
+                db_logger.exception(e)
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -309,7 +316,7 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
                         if not product_id:
                             product_id = id_generator()
                     except Exception as e:
-                        pass
+                        db_logger.exception(e)
                     shop = Shop.objects.filter(user=request.user).last()
                     bulk_mgr.add(Product(name=row[1], category=category,
                                          size=row[3], color=row[4], quantity=row[5],description=row[6],
@@ -320,7 +327,7 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -336,7 +343,8 @@ class DownloadProductDataCsvView(APIView, ResponseViewMixin):
             return export_to_csv(shop, sample)
 
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class ProductParamsvView(APIView, ResponseViewMixin):
@@ -356,6 +364,7 @@ class ProductParamsvView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -397,11 +406,12 @@ class SalesView(APIView, ResponseViewMixin):
                                                    },
                                              message=SUCCESS)
             except Exception as e:
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+                db_logger.exception(e)
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -429,7 +439,7 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
                                          data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
@@ -464,7 +474,7 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
                                          data=self.get_paginated_response(response).data,
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
@@ -496,7 +506,7 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
@@ -517,7 +527,8 @@ class  ProductPricingView(GenericViewSet, ResponseViewMixin):
                 return self.success_response(code='HTTP_200_OK',
                                              message=SUCCESS)
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     def retrieve(self, request, pk=None):
         try:
@@ -542,4 +553,5 @@ class  ProductPricingView(GenericViewSet, ResponseViewMixin):
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

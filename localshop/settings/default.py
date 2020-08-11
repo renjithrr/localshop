@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'customer',
     'storages',
     'django.contrib.gis',
+    'django_db_logger'
 
 ]
 
@@ -159,28 +160,30 @@ EMAIL_HOST='localhost'
 EMAIL_PORT=1025
 
 
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'mail_admins': {
-#             'level': 'ERROR',
-#             'class': 'django.utils.log.AdminEmailHandler'
-#         },
-# 'file': {
-#         'level':'DEBUG',
-#         'class':'logging.FileHandler',
-#         'filename': os.path.join(BASE_DIR, 'localshop.log'),
-#     },
-#     },
-#     'loggers': {
-#         'django.request': {
-#             'handlers': ['mail_admins', 'file'],
-#             'level': 'ERROR',
-#             'propagate': True,
-#         },
-#     }
-# }
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
+    },
+    'handlers': {
+        'db_log': {
+            'level': 'DEBUG',
+            'class': 'django_db_logger.db_log_handler.DatabaseLogHandler'
+        },
+    },
+    'loggers': {
+        'db': {
+            'handlers': ['db_log'],
+            'level': 'DEBUG'
+        }
+    }
+}
 
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
@@ -194,3 +197,4 @@ AWS_LOCATION = 'static'
 AWS_DEFAULT_ACL = None
 PUBLIC_FILE_STORAGE = 'localshop.settings.storage_backends.PublicMediaStorage'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'us-east-2'

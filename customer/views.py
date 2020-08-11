@@ -1,3 +1,4 @@
+import logging
 from django.contrib.gis.measure import D
 from django.contrib.gis.geos import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -14,6 +15,8 @@ from utilities.utils import deliver_sms, OTPgenerator
 from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData
 from customer.models import Customer, Address, CustomerFavouriteProduct
 from product.models import Product
+
+db_logger = logging.getLogger('db')
 
 
 class NearbyShop(APIView, ResponseViewMixin):
@@ -42,7 +45,7 @@ class NearbyShop(APIView, ResponseViewMixin):
                                          data={'shops': serializer.data},
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -61,6 +64,7 @@ class CommonParamsView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -82,7 +86,8 @@ class OrderHistoryView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class CustomerAddressView(GenericViewSet, ResponseViewMixin):
@@ -119,7 +124,7 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
                                          data=serializer.data,
                                          message=SUCCESS)
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
     def retrieve(self, request, pk=None):
@@ -165,6 +170,7 @@ class ProductListing(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
@@ -197,7 +203,7 @@ class CustomerSignup(APIView, ResponseViewMixin):
                                                'user_type': user.role
                                                })
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
@@ -228,7 +234,7 @@ class AccountEditView(APIView, ResponseViewMixin):
                                                'user_type': user.role
                                                })
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
@@ -252,7 +258,7 @@ class CustomerFavouriteView(APIView, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
                                          data={})
         except Exception as e:
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
@@ -274,4 +280,5 @@ class ProductVarientView(APIView, ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
