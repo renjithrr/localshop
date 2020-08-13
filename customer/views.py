@@ -141,34 +141,37 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
 class ProductListing(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
-                                 type=openapi.TYPE_STRING)
-    longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+    # latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
+    #                              type=openapi.TYPE_STRING)
+    # longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+    #                               type=openapi.TYPE_STRING)
+    shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="shop_id",
                                   type=openapi.TYPE_STRING)
-    search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[longitude, latitude, search])
+    # search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[shop_id])
     def get(self, request):
         try:
-            latitude = request.GET.get('latitude', 0)
-            longitude = request.GET.get('longitude', 0)
-            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
-            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
-            shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
-            if request.GET.get('search', ''):
-                searched_shops = shops.filter(business_name__icontains=request.GET.get('search', ''))
-                shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
-                products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
-                products = products.filter(name__icontains=request.GET.get('search', ''))
+            # latitude = request.GET.get('latitude', 0)
+            # longitude = request.GET.get('longitude', 0)
+            # location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            # distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            # shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            # if request.GET.get('search', ''):
+            #     searched_shops = shops.filter(business_name__icontains=request.GET.get('search', ''))
+            #     shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
+            #     products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
+            shop = Shop.objects.get(id=request.data.get('shop_id'))
+            products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
 
-                product_serializer = CustomerProductSerializer(products, many=True)
-                return self.success_response(code='HTTP_200_OK',
-                                             data={'products': product_serializer.data, 'shops': shop_serializer.data
-                                                   },
-                                         message=SUCCESS)
+            product_serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
-                                         data={
+                                         data={'products': product_serializer.data,
                                                },
-                                         message=SUCCESS)
+                                     message=SUCCESS)
+        # return self.success_response(code='HTTP_200_OK',
+        #                              data={
+        #                                    },
+        #                              message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

@@ -111,7 +111,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'brand', 'size', 'color', 'quantity', 'mrp', 'offer_prize', 'lowest_selling_rate',
-                  'highest_selling_rate', 'product_images', 'shop']
+                  'highest_selling_rate', 'product_images', 'shop', 'rating', 'description', 'is_favourite', 'moq']
 
     # def get_varients(self, obj):
     #     varients = obj.product_varients.all()
