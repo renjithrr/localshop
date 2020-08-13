@@ -130,13 +130,16 @@ class CustomerProductSerializer(serializers.ModelSerializer):
 
 class VarientSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField(source='product.name')
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductVarient
         fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',
                   'lowest_selling_rate', 'highest_selling_rate', 'tax_rate', 'moq', 'unit', 'images', 'rating',
                   'is_favourite', 'name']
+
+    def get_name(self, obj):
+        return obj.product.name
 
 
     def get_images(self, obj):
