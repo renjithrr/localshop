@@ -276,7 +276,7 @@ class ProductVarientView(APIView, ResponseViewMixin):
     def get(self, request):
         try:
             product = Product.objects.get(id=request.GET.get('product_id'))
-            products = Product.product_varients.all()
+            products = product.product_varients.all()
             serializer = VarientSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
