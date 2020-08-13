@@ -268,10 +268,10 @@ class CustomerFavouriteView(APIView, ResponseViewMixin):
 class ProductVarientView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    customer = openapi.Parameter('product_id', openapi.IN_QUERY, description="Product ID",
+    product_id = openapi.Parameter('product_id', openapi.IN_QUERY, description="Product ID",
                                  type=openapi.TYPE_STRING)
 
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[customer],
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[product_id],
                          responses={'500': GENERAL_ERROR, '200': VarientSerializer})
     def get(self, request):
         try:
