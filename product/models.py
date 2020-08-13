@@ -102,6 +102,8 @@ class ProductVarient(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden= models.BooleanField(default=False)
+    rating = models.FloatField(default=5)
+    is_favourite = models.BooleanField(default=False)
     shop = models.ForeignKey(Shop, related_name='shop_product_varients', blank=True, null=True, on_delete=models.CASCADE)
 
 

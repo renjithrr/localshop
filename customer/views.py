@@ -160,7 +160,7 @@ class ProductListing(APIView, ResponseViewMixin):
             #     searched_shops = shops.filter(business_name__icontains=request.GET.get('search', ''))
             #     shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
             #     products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
-            shop = Shop.objects.get(id=request.data.get('shop_id'))
+            shop = Shop.objects.get(id=request.GET.get('shop_id'))
             products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
 
             product_serializer = CustomerProductSerializer(products, many=True)
@@ -268,15 +268,15 @@ class CustomerFavouriteView(APIView, ResponseViewMixin):
 class ProductVarientView(APIView, ResponseViewMixin):
     permission_classes = [AllowAny]
 
-    customer = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
+    customer = openapi.Parameter('product_id', openapi.IN_QUERY, description="Product ID",
                                  type=openapi.TYPE_STRING)
 
     @swagger_auto_schema(tags=['customer'], manual_parameters=[customer],
                          responses={'500': GENERAL_ERROR, '200': VarientSerializer})
     def get(self, request):
         try:
-            shop = Shop.objects.get(id=request.GET.get('shop_id'))
-            products = shop.shop_product_varients.all()
+            product = Product.objects.get(id=request.GET.get('product_id'))
+            products = Product.product_varients.all()
             serializer = VarientSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
