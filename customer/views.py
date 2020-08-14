@@ -14,7 +14,7 @@ from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
 from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData
 from customer.models import Customer, Address, CustomerFavouriteProduct
-from product.models import Product
+from product.models import Product, Category
 
 db_logger = logging.getLogger('db')
 
@@ -161,9 +161,10 @@ class ProductListing(APIView, ResponseViewMixin):
             #     shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
             #     products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
-            products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
-
-            product_serializer = CustomerProductSerializer(products, many=True)
+            # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
+            categories = Category.objects.all()
+            product_serializer = CustomerProductSerializer(categories, context={'shop': shop}, many=True)
+            # product_serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'products': product_serializer.data,
                                                },
