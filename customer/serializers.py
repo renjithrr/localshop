@@ -123,7 +123,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
                  'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
                  'moq': product.moq, 'offer_prize': product.offer_prize,
                  'highest_selling_rate': product.highest_selling_rate, 'rating': product.rating,
-                 'shop': product.shop, 'hsn_code': obj.hsn_code,
+                 'shop': product.shop, 'hsn_code': product.hsn_code,
                  'description': product.description, 'is_favourite': product.is_favourite,
                  'id': product.id, 'color': product.color,
                  'product_images': [{'id': image.id, 'image_url': image.image.url}
