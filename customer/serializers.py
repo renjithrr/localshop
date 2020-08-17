@@ -119,7 +119,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         shop = self.context.get('shop')
         products = Product.objects.filter(shop=shop, category=obj)
-        search = self.context.get('shop')
+        search = self.context.get('search')
         if search:
             products = products.filter(name__icontains=search)
         return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
