@@ -147,8 +147,8 @@ class ProductListing(APIView, ResponseViewMixin):
     #                               type=openapi.TYPE_STRING)
     shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="shop_id",
                                   type=openapi.TYPE_STRING)
-    # search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[shop_id])
+    search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[shop_id, search])
     def get(self, request):
         try:
             # latitude = request.GET.get('latitude', 0)
@@ -161,9 +161,11 @@ class ProductListing(APIView, ResponseViewMixin):
             #     shop_serializer = NearbyShopSerializer(searched_shops, context={'location': location}, many=True)
             #     products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
+            search = request.GET.get('search', '')
             # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
-            categories = Category.objects.all()
-            product_serializer = CustomerProductSerializer(categories, context={'shop': shop}, many=True)
+            categories = Category.objects.filter(product__isnull=False)
+            product_serializer = CustomerProductSerializer(categories, context={'shop': shop, 'search': search},
+                                                           many=True)
             # product_serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'products': product_serializer.data,

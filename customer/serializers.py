@@ -119,13 +119,17 @@ class CustomerProductSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         shop = self.context.get('shop')
         products = Product.objects.filter(shop=shop, category=obj)
+        search = self.context.get('shop')
+        if search:
+            products = products.filter(name__icontains=search)
         return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
                  'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
                  'moq': product.moq, 'offer_prize': product.offer_prize,
                  'highest_selling_rate': product.highest_selling_rate, 'rating': product.rating,
                  'shop': product.shop.id, 'hsn_code': product.hsn_code,
                  'description': product.description, 'is_favourite': product.is_favourite,
-                 'id': product.id, 'color': product.color,
+                 'id': product.id, 'color': product.color, 'is_best_Seller': product.is_best_Seller,
+                 'is_bargain_possible': product.is_bargain_possible, 'offer_percentage': product.offer_percentage,
                  'product_images': [{'id': image.id, 'image_url': image.image.url}
                   for image in ProductImage.objects.filter(product=product)]} for product in products]
 
@@ -141,7 +145,7 @@ class VarientSerializer(serializers.ModelSerializer):
         model = ProductVarient
         fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',
                   'lowest_selling_rate', 'highest_selling_rate', 'tax_rate', 'moq', 'unit', 'images', 'rating',
-                  'is_favourite', 'name']
+                  'is_favourite', 'name', 'id']
 
     def get_name(self, obj):
         return obj.product.name

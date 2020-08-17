@@ -71,6 +71,9 @@ class Product(AuditedModel, models.Model):
     is_hidden = models.BooleanField(default=False)
     rating = models.FloatField(default=5)
     is_favourite = models.BooleanField(default=False)
+    is_best_Seller = models.BooleanField(default=False)
+    is_bargain_possible = models.BooleanField(default=False)
+    offer_percentage = models.CharField(max_length=10, blank=True, null=True)
     shop = models.ForeignKey(Shop, related_name='shop_products', blank=True, null=True, on_delete=models.CASCADE)
 
 
