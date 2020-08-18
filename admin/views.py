@@ -61,7 +61,9 @@ class AdminShopSearchView(APIView,ResponseViewMixin):
 
     def post(self,request):
         try:
-            orders = Order.objects.filter(id=request.data.get('id')).order_by('status')
+            start_date = datetime.datetime.fromtimestamp(request.data.get('start_time'))
+            end_date = datetime.datetime.fromtimestamp(request.data.get('end_time'))
+            orders = Order.objects.filter(id=request.data.get('id'), created_at__range=(start_date, end_date)).order_by('status')
             serializer = AdminOrderSerializer(orders, many=True)
 
             return self.success_response(code='HTTP_200_OK',
@@ -69,5 +71,4 @@ class AdminShopSearchView(APIView,ResponseViewMixin):
                                                },
                                          message=SUCCESS)
         except Exception as e:
-            print("========================",e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
