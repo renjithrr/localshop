@@ -13,7 +13,7 @@ from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
 from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData
-from customer.models import Customer, Address, CustomerFavouriteProduct
+from customer.models import Customer, Address, CustomerFavouriteProduct, Order
 from product.models import Product, Category
 
 db_logger = logging.getLogger('db')
@@ -163,7 +163,7 @@ class ProductListing(APIView, ResponseViewMixin):
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
             search = request.GET.get('search', '')
             # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
-            categories = Category.objects.filter(product__isnull=False)
+            categories = Category.objects.filter(product__isnull=False, product__shop=shop)
             product_serializer = CustomerProductSerializer(categories, context={'shop': shop, 'search': search},
                                                            many=True)
             # product_serializer = CustomerProductSerializer(products, many=True)
@@ -281,6 +281,27 @@ class ProductVarientView(APIView, ResponseViewMixin):
             product = Product.objects.get(id=request.GET.get('product_id'))
             products = product.product_varients.all()
             serializer = VarientSerializer(products, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'orders': serializer.data,
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class OrderView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    product_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
+                                 type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[product_id],
+                         responses={'500': GENERAL_ERROR, '200': VarientSerializer})
+    def get(self, request):
+        try:
+            order = Order.objects.get(id=request.GET.get('order_id'))
+            serializer = CustomerOrderSerializer(order)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
                                                },

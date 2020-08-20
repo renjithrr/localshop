@@ -74,7 +74,7 @@ class OrderSerializer(serializers.ModelSerializer):
     product = serializers.CharField(source='product_id.name')
     class Meta:
         model = OrderItem
-        fields = ['product', 'quantity']
+        fields = ['product', 'quantity', 'rate']
 
 class CustomerOrderSerializer(serializers.ModelSerializer):
     shop = serializers.CharField(source='shop.shop_name')
