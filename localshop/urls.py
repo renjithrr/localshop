@@ -43,6 +43,7 @@ urlpatterns = [
     path('api/v1/user/', include('user.urls')),
     path('api/v1/product/', include('product.urls')),
     path('api/v1/customer/', include('customer.urls')),
+    path('api/v1/admin/', include('admin.urls')),
 ]
 url(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),
 url(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
