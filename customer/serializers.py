@@ -169,3 +169,61 @@ class OrderHistorySerializer(serializers.ModelSerializer):
 
     def get_total_amount(self, obj):
         return OrderItem.objects.filter(order_id=obj).aggregate(Sum('total'))['total__sum']
+
+
+class CustomerShopSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    pick_up = serializers.SerializerMethodField()
+    home_delivery = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shop
+        fields = ['id', 'shop_name', 'address', 'business_name', 'image', 'logo', 'lat', 'long', 'rating'
+            , 'category', 'pick_up', 'home_delivery', 'products']
+
+    def get_image(self, obj):
+        return obj.image.url if obj.image else ''
+
+    def get_category(self, obj):
+        return {'id': obj.shop_category.id, 'name': obj.shop_category.name}
+
+    def get_pick_up(self, obj):
+        pickup = obj.shop_delivery_options.all()
+        pick_up = False
+        for value in pickup:
+            for data in value.delivery_type:
+                if int(data) == DELIVERY_CHOICES.pickup:
+                    pick_up = True
+                    break
+
+        return pick_up
+        # for i in obj.shop_delivery_options.all():
+        #     d = i.delivery_type
+        #     for j in d:
+        #         print(
+        #             j
+        #         )
+        # return True if pickup else False
+
+    def get_home_delivery(self, obj):
+        pickup = obj.shop_delivery_options.all()
+        pick_up = False
+        for value in pickup:
+            for data in value.delivery_type:
+                if int(data) == DELIVERY_CHOICES.shop_ship:
+                    pick_up = True
+                    break
+
+        return pick_up
+
+    def get_products(self, obj):
+        categories = Category.objects.filter(product__isnull=False, product__shop=obj)
+        product_serializer = CustomerProductSerializer(categories, context={'shop': obj},
+                                                       many=True)
+        return product_serializer.data
+
+
+
+

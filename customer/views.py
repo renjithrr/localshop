@@ -8,7 +8,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
-    CustomerProductSerializer, VarientSerializer
+    CustomerProductSerializer, VarientSerializer, CustomerShopSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
@@ -304,6 +304,27 @@ class OrderView(APIView, ResponseViewMixin):
             serializer = CustomerOrderSerializer(order)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class ShopView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
+                                 type=openapi.TYPE_STRING)
+
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[shop_id],
+                         responses={'500': GENERAL_ERROR, '200': CustomerShopSerializer})
+    def get(self, request):
+        try:
+            shop = Shop.objects.get(id=request.GET.get('shop_id'))
+            serializer = CustomerShopSerializer(shop)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shop_details': serializer.data,
                                                },
                                          message=SUCCESS)
         except Exception as e:
