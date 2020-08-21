@@ -226,4 +226,12 @@ class CustomerShopSerializer(serializers.ModelSerializer):
 
 
 
+class ShopBannerSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Shop
+        fields = ['id', 'shop_name', 'image']
+
+    def get_image(self, obj):
+        return obj.image.url if obj.image else ''

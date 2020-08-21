@@ -35,7 +35,8 @@ class Customer(models.Model):
 
 
 class Address(AuditedModel, models.Model):
-    customer = models.ForeignKey(Customer, related_name='customer_addresses', on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, related_name='customer_addresses', on_delete=models.CASCADE, blank=True,
+                                 null=True)
     address = models.TextField(blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)

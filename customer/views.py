@@ -8,7 +8,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
-    CustomerProductSerializer, VarientSerializer, CustomerShopSerializer
+    CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
@@ -56,11 +56,11 @@ class CommonParamsView(APIView, ResponseViewMixin):
         try:
             shop_choices = [{'id': shop.id, 'category': shop.name}
                             for shop in ShopCategory.objects.all()]
-            payment_methods = [{'id': method.id, 'method': method.payment_type}
-                               for method in PaymentMethod.objects.all()]
+            # payment_methods = [{'id': method.id, 'method': method.payment_type}
+            #                    for method in PaymentMethod.objects.all()]
             return self.success_response(code='HTTP_200_OK',
                                          data={'shopcategories': shop_choices,
-                                               'payment_methods': payment_methods
+                                               # 'payment_methods': payment_methods
                                                },
                                          message=SUCCESS)
         except Exception as e:
@@ -91,7 +91,7 @@ class OrderHistoryView(APIView, ResponseViewMixin):
 
 
 class CustomerAddressView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = CustomerAddressSerializer
     customer = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Customer ID",
                                  type=openapi.TYPE_STRING)
@@ -103,12 +103,16 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
                          responses={'500': GENERAL_ERROR, '200': CustomerAddressSerializer})
     def create(self, request):
         try:
+            print(request.data)
             address = Address.objects.get(id=request.data.get('id'))
             serializer = CustomerAddressSerializer(instance=address, data=request.data)
         except Address.DoesNotExist:
             serializer = CustomerAddressSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            address = serializer.save()
+            customer = Customer.objects.get(user=request.user)
+            address.customer = customer
+            address.save()
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
                                          message=SUCCESS)
@@ -133,6 +137,18 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
             serializer = CustomerAddressSerializer(address)
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
+                                         message=SUCCESS)
+        except Address.DoesNotExist:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+    def delete(self, request, pk=None):
+        try:
+            address = Address.objects.get(id=request.data.get('id', ''))
+            address.is_deleted = True
+            address.save()
+            return self.success_response(code='HTTP_200_OK',
+                                         data={},
                                          message=SUCCESS)
         except Address.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
@@ -312,7 +328,7 @@ class OrderView(APIView, ResponseViewMixin):
 
 
 class ShopView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
                                  type=openapi.TYPE_STRING)
@@ -330,3 +346,47 @@ class ShopView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class BannerView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            shop = Shop.objects.all()
+            serializer = ShopBannerSerializer(shop, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shop_details': serializer.data,
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class TrendingShopsView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
+                                   type=openapi.TYPE_STRING)
+    longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[latitude, longitude],
+                         responses={'500': GENERAL_ERROR, '200': NearbyShopSerializer})
+    def get(self, request):
+        try:
+
+            latitude = request.GET.get('latitude', 0)
+            longitude = request.GET.get('longitude', 0)
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            if request.GET.get('shop_category', ''):
+                query_set = query_set.filter(shop_category=request.GET.get('shop_category', ''))
+            serializer = NearbyShopSerializer(query_set, context={'location': location}, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shops': serializer.data},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
