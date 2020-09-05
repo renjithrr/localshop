@@ -4,7 +4,7 @@ from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from customer.models import Order
 from user.models import Shop
-from admin.serializers import AdminOrderSerializer, OrderDetailsSerializer, AdminShopSerializer
+from admin.serializers import AdminOrderSerializer, OrderDetailsSerializer, AdminShopSerializer, ShopDetailsSerializer
 import datetime
 
 
@@ -72,3 +72,21 @@ class AdminShopSearchView(APIView,ResponseViewMixin):
                                          message=SUCCESS)
         except Exception as e:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class AdminShopDetailsView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            shop_id = request.GET.get('id', '')
+            shop = Shop.objects.get(id=shop_id)
+            serializer = ShopDetailsSerializer(shop)
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data=serializer.data,
+                                         message=SUCCESS)
+        except Exception as e:
+            print("----------------------"+str(e))
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+

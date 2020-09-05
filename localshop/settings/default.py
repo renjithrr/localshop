@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'customer',
     'storages',
     'django.contrib.gis',
+    'corsheaders',
     'django_db_logger'
 
 ]
@@ -60,11 +61,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'middleware.AuditMiddleware.AuditingMiddleWare'
+    'middleware.AuditMiddleware.AuditingMiddleWare',
+    'corsheaders.middleware.CorsMiddleware',
 
 ]
 
 ROOT_URLCONF = 'localshop.urls'
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {

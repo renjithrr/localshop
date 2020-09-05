@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from admin.views import AdminOrderView, OrderDetailsView, AdminShopView, AdminShopSearchView
+from admin.views import AdminOrderView, OrderDetailsView, AdminShopView, AdminShopSearchView, AdminShopDetailsView
 
 
 router = DefaultRouter()
@@ -13,5 +13,6 @@ urlpatterns = [
     path('shops', AdminShopView.as_view()),
     path('shops:search', AdminShopSearchView.as_view()),
 
+    path('shops-details/', AdminShopDetailsView.as_view()),
 
 ]
