@@ -3,7 +3,7 @@ from rest_framework import serializers
 from datetime import datetime, timezone
 
 from customer.models import Order,OrderItem
-from user.models import Shop
+from user.models import Shop, DeliveryOption, UserPaymentMethod
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     delay = serializers.SerializerMethodField()
@@ -64,3 +64,50 @@ class AdminShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['shop_name', 'vendor_name', 'logo', 'id']
+
+
+class ShopDetailsSerializer(serializers.ModelSerializer):
+    phone_number = serializers.SerializerMethodField()
+    delivery_type = serializers.SerializerMethodField()
+    account_number = serializers.SerializerMethodField()
+    ifsc_code = serializers.SerializerMethodField()
+    payment_methods = serializers.SerializerMethodField()
+    shop_category_name = serializers.SerializerMethodField()
+    shop_category_description = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shop
+        fields = ['shop_name', 'phone_number', 'address', 'vendor_name', 'shop_category_name', 'shop_category_description', 'lat', 'long', 'pincode', 'gst_reg_number', 'delivery_type', 'account_number', 'ifsc_code', 'payment_methods','gst_image']
+
+    @staticmethod
+    def get_phone_number(self):
+        return self.user.mobile_number
+
+    def get_delivery_type(self, obj):
+        try:
+            delivery = DeliveryOption.objects.get(shop=obj.id)
+        except DeliveryOption.DoesNotExist:
+            return ""
+        return delivery.delivery_type
+
+    def get_account_number(self, obj):
+        return obj.user.account_number
+
+    def shop_category(self, obj):
+        return obj.shop_category.name
+
+    def get_shop_category_name(self, obj):
+        return obj.shop_category.name
+
+    def get_shop_category_description(self, obj):
+        return obj.shop_category.description
+
+    def get_ifsc_code(self,obj):
+        return obj.user.ifsc_code
+
+    def get_payment_methods(self,obj):
+        try:
+            payments = UserPaymentMethod.objects.get(user=obj.user)
+        except UserPaymentMethod.DoesNotExist:
+            return ""
+        return payments
