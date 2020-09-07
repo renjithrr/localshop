@@ -273,10 +273,13 @@ class CustomerFavouriteView(APIView, ResponseViewMixin):
         from product.models import Product
         try:
             product = Product.objects.get(id=request.data.get('product_id'))
+
             if request.data.get('is_favourite') == 'true':
-                CustomerFavouriteProduct.objects.get_or_create(product=product, customer__user=request.user)
+                CustomerFavouriteProduct.objects.get_or_create(product=product,
+                                                               customer=Customer.objects.get(user=request.user))
             else:
-                CustomerFavouriteProduct.objects.get(product=product, customer__user=request.user).delete()
+                CustomerFavouriteProduct.objects.get(product=product,
+                                                     customer=Customer.objects.get(user=request.user)).delete()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
                                          data={})
         except Exception as e:
