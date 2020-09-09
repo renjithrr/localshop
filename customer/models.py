@@ -44,6 +44,7 @@ class Address(AuditedModel, models.Model):
     location = models.PointField(blank=True, null=True)
     locality = models.CharField(max_length=30, blank=True, null=True)
     address_type = models.IntegerField(choices=ADDRESS_TYPES.choices(), default=ADDRESS_TYPES.home)
+    is_deleted = models.BooleanField(default=False)
 
 
 class Order(AuditedModel, models.Model):

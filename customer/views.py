@@ -122,7 +122,7 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
     @swagger_auto_schema(tags=['product'], manual_parameters=[customer])
     def list(self, request, *args, **kwargs):
         try:
-            adresses = Address.objects.filter(customer=Customer.objects.get(user=request.user))
+            adresses = Address.objects.filter(customer=Customer.objects.get(user=request.user), is_deleted=False)
             serializer = CustomerAddressSerializer(adresses, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
