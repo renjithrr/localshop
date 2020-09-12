@@ -120,9 +120,9 @@ class DeliveryOption(AuditedModel, models.Model):
     free_delivery = models.BooleanField(default=False)
     free_delivery_for = models.FloatField(blank=True, null=True)
 
-
     def __str__(self):
         return self.shop.shop_name
+
 
 class DeliveryVehicle(AuditedModel, models.Model):
     delivery_option = models.ForeignKey(DeliveryOption, related_name='delivery_option_vehicle',

@@ -4,7 +4,7 @@ from django.db.models import Sum
 
 from user.models import Shop, DeliveryOption, DELIVERY_CHOICES
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient,  Category
-from customer.models import Address, ADDRESS_TYPES, Order, OrderItem
+from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES
 
 
 #
@@ -69,6 +69,12 @@ class NearbyShopSerializer(serializers.ModelSerializer):
     #     delivery_options = obj.shop_delivery_options.all()
     #     return DeliverySerializer(delivery_options, many=True).data if delivery_options else []
 
+class ShopOrderSerializer(serializers.ModelSerializer):
+    mobile_number = serializers.CharField(source='user.mobile_number')
+    class Meta:
+        model = Shop
+        fields = ['shop_name', 'business_name', 'address', 'mobile_number', 'lat', 'lat']
+
 
 class OrderSerializer(serializers.ModelSerializer):
     product = serializers.CharField(source='product_id.name')
@@ -76,20 +82,55 @@ class OrderSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['product', 'quantity', 'rate']
 
+
+class OrderCustomerSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='user.first_name')
+    mobile_number = serializers.CharField(source='user.mobile_number')
+    address_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = ['name', 'mobile_number', 'address_details']
+
+    @staticmethod
+    def get_address_details(obj):
+        address = obj.customer_addresses.filter(is_deleted=False).last()
+        return [{'address': address.address, 'lat': address.lat, 'long': address.long}] if address else []
+
+
 class CustomerOrderSerializer(serializers.ModelSerializer):
-    shop = serializers.CharField(source='shop.shop_name')
-    address = serializers.CharField(source='shop.address')
+    shop = serializers.SerializerMethodField()
     orders = serializers.SerializerMethodField()
+    customer = serializers.SerializerMethodField()
+    status_label = serializers.SerializerMethodField()
+    payment_type_label = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['shop', 'address', 'created_at', 'grand_total', 'status', 'orders']
+        fields = ['id', 'shop', 'created_at', 'grand_total', 'status','status_label', 'orders','status', 'customer',
+                  'payment_type', 'payment_type_label', 'grand_total']
 
     @staticmethod
     @swagger_serializer_method(serializer_or_field=OrderSerializer(many=True))
     def get_orders(obj):
         orders = obj.order_items.all()
         return OrderSerializer(orders, many=True).data if orders else []
+
+    @staticmethod
+    def get_shop(obj):
+        return ShopOrderSerializer(obj.shop).data
+
+    @staticmethod
+    def get_customer(obj):
+        return OrderCustomerSerializer(obj.customer).data
+
+    @staticmethod
+    def get_status_label(obj):
+        return ORDER_STATUS.get_label(obj.status)
+
+    @staticmethod
+    def get_payment_type_label(obj):
+        return PAYMENT_CHOICES.get_label(obj.payment_type)
 
 
 class CustomerAddressSerializer(serializers.ModelSerializer):
@@ -106,6 +147,7 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
 
 class CustomerProductSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField('get_products')
+
     class Meta:
         model = Category
         fields = ['name', 'products']
