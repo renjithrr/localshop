@@ -322,7 +322,7 @@ class OrderView(APIView, ResponseViewMixin):
             order = Order.objects.get(id=request.GET.get('order_id'))
             serializer = CustomerOrderSerializer(order)
             return self.success_response(code='HTTP_200_OK',
-                                         data={'orders': serializer.data,
+                                         data={'order_details': serializer.data,
                                                },
                                          message=SUCCESS)
         except Exception as e:

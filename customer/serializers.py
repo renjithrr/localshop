@@ -100,19 +100,19 @@ class OrderCustomerSerializer(serializers.ModelSerializer):
 
 class CustomerOrderSerializer(serializers.ModelSerializer):
     shop = serializers.SerializerMethodField()
-    orders = serializers.SerializerMethodField()
+    order_items = serializers.SerializerMethodField()
     customer = serializers.SerializerMethodField()
     status_label = serializers.SerializerMethodField()
     payment_type_label = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'shop', 'created_at', 'grand_total', 'status','status_label', 'orders','status', 'customer',
-                  'payment_type', 'payment_type_label', 'grand_total']
+        fields = ['id', 'shop', 'created_at', 'grand_total', 'status','status_label', 'order_items','status',
+                  'customer', 'payment_type', 'payment_type_label', 'grand_total']
 
     @staticmethod
     @swagger_serializer_method(serializer_or_field=OrderSerializer(many=True))
-    def get_orders(obj):
+    def get_order_items(obj):
         orders = obj.order_items.all()
         return OrderSerializer(orders, many=True).data if orders else []
 
