@@ -73,7 +73,7 @@ class ShopOrderSerializer(serializers.ModelSerializer):
     mobile_number = serializers.CharField(source='user.mobile_number')
     class Meta:
         model = Shop
-        fields = ['shop_name', 'business_name', 'address', 'mobile_number', 'lat', 'lat']
+        fields = ['shop_name', 'business_name', 'address', 'mobile_number', 'lat', 'long']
 
 
 class OrderSerializer(serializers.ModelSerializer):
