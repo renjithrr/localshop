@@ -79,6 +79,15 @@ class ShopCategory(models.Model):
         return self.name
 
 
+class ServiceArea(AuditedModel, models.Model):
+    lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    location = models.PointField(default='POINT (0 0)',srid=4326)
+
+    def __str__(self):
+        return str(self.id)
+
+
 class Shop(AuditedModel, models.Model):
     user = models.ForeignKey(AppUser, related_name='user_shops', on_delete=models.CASCADE)
     vendor_name = models.CharField(max_length=30, blank=True, null=True)
@@ -107,9 +116,20 @@ class Shop(AuditedModel, models.Model):
     logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     rating = models.FloatField(default=5)
     available = models.BooleanField(default=True)
+    service_area = models.ForeignKey(ServiceArea, related_name='service_area_shops', on_delete=models.CASCADE,
+                                      blank=True, null=True)
 
     def __str__(self):
         return self.shop_name
+
+
+class Coupon(AuditedModel, models.Model):
+    code = models.CharField(max_length=70, blank=True, null=True)
+    discount = models.IntegerField(blank=True, null=True)
+    is_percentage = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    shops = models.ManyToManyField(Shop, blank=True, null=True, related_name='shop_coupons')
+
 
 
 class DeliveryOption(AuditedModel, models.Model):

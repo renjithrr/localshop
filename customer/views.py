@@ -13,9 +13,9 @@ from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
-from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData
+from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon
 from customer.models import Customer, Address, CustomerFavouriteProduct, Order
-from product.models import Product, Category
+from product.models import Product, Category, ProductVarient
 
 db_logger = logging.getLogger('db')
 
@@ -455,3 +455,80 @@ class IsDeliveryAvailableView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class IsUnderServiceAreaView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    address_id = openapi.Parameter('address_id', openapi.IN_QUERY, description="Address ID",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
+    def get(self, request):
+        try:
+
+            address_id = request.GET.get('address_id', '')
+            address = Address.objects.get(id=address_id)
+            latitude = address.lat
+            longitude = address.long
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            distance1 = ServiceArea.objects.last().location.distance(location)
+            if float(distance) > distance1:
+                is_under_service_area = True
+            else:
+                is_under_service_area = False
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'is_under_service_area': is_under_service_area},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class ApplyCouponView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    # @swagger_auto_schema(tags=['customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'mobile_number': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'name': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'email': openapi.Schema(type=openapi.TYPE_STRING),
+    #     }))
+    def post(self, request):
+        address_id = request.data.get('address_id')
+        products = request.data.get('products')
+        discount = None
+        total_amount = 0
+        shop = None
+        offer_prize = None
+        shipping_charge = None
+        try:
+            for value in products:
+                try:
+                    product = Product.objects.get(id=value['id'])
+                except Exception as e:
+                    product = ProductVarient.objects.get(id=value['id'])
+
+                total_amount += product.mrp * value['quantity']
+                shop = product.shop
+            try:
+                coupon = Coupon.objects.get(shops=shop, is_active=True, code=request.data.get('coupon_code'))
+            except Exception as e:
+                coupon = None
+            if coupon:
+                if coupon.is_percentage:
+                    discount = total_amount * (coupon.discount/100)
+                    offer_prize = total_amount - discount
+                else:
+                    discount = coupon.discount
+                    offer_prize = total_amount - discount
+
+            return self.success_response(code='HTTP_200_OK', message=SUCCESS,
+                                         data={'coupon_discount': discount,
+                                               'total':offer_prize,
+                                               'shipping_charge': shipping_charge
+                                               })
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

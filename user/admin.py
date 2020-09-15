@@ -1,6 +1,8 @@
 from django.contrib import admin
+from django.contrib.gis.geos import Point
+
 from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory, PaymentMethod, UserPaymentMethod, \
-    DeliveryVehicle, DeliveryOption
+    DeliveryVehicle, DeliveryOption, ServiceArea, Coupon
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -40,6 +42,20 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
     list_display = ('shop', 'delivery_type', 'delivery_charge', 'delivery_charge')
 
 
+class ServiceAreaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'lat', 'long')
+
+    def save_model(self, request, obj, form, change):
+        longitude = obj.long
+        latitude = obj.lat
+        location = Point(float(longitude), float(latitude))
+        obj.location = location
+        super().save_model(request, obj, form, change)
+
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ('id', 'code', 'discount', 'is_percentage', 'is_active')
+
+
 admin.site.register(AppUser, UserAdmin)
 admin.site.register(DeviceToken, DeviceTokenAdmin)
 admin.site.register(Shop, ShopAdmin)
@@ -49,3 +65,6 @@ admin.site.register(PaymentMethod, PaymentMethodAdmin)
 admin.site.register(UserPaymentMethod, UserPaymentMethodAdmin)
 admin.site.register(DeliveryVehicle, DeliveryVehicleAdmin)
 admin.site.register(DeliveryOption, DeliveryOptionAdmin)
+admin.site.register(ServiceArea, ServiceAreaAdmin)
+admin.site.register(Coupon, CouponAdmin)
+
