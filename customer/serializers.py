@@ -4,6 +4,7 @@ from django.db.models import Sum
 
 from user.models import Shop, DeliveryOption, DELIVERY_CHOICES
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient,  Category
+from product.serializers import ProductListingSerializer
 from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES
 
 
@@ -277,3 +278,41 @@ class ShopBannerSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return obj.image.url if obj.image else ''
+
+
+class CustomerOrderHistorySerializer(serializers.ModelSerializer):
+    shop = serializers.SerializerMethodField()
+    products = serializers.SerializerMethodField()
+    status_label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = ['shop', 'products', 'grand_total', 'created_at', 'rating', 'otp', 'id', 'status', 'status_label']
+
+    @staticmethod
+    def get_shop(obj):
+        return [{'id': obj.shop.id, 'name': obj.shop.shop_name, 'lat': obj.shop.lat, 'long': obj.shop.long,
+                 'rating': obj.shop.rating, 'address': obj.shop.address }]
+
+    @staticmethod
+    def get_status_label(obj):
+        return ORDER_STATUS.get_label(obj.status)
+
+    @staticmethod
+    def get_products(obj):
+        products = obj.order_items.all()
+        return [{'name': product.product_id.name, 'brand': product.product_id.brand,
+                                    'size': product.product_id.size,
+                 'quantity': product.quantity, 'mrp': product.product_id.mrp,
+                 'lowest_selling_rate': product.product_id.lowest_selling_rate,
+                 'moq': product.product_id.moq, 'offer_prize': product.product_id.offer_prize,
+                 'highest_selling_rate': product.product_id.highest_selling_rate, 'rating': product.product_id.rating,
+                 'shop': obj.shop.id if obj.shop else '', 'hsn_code': product.product_id.hsn_code,
+                 'description': product.product_id.description, 'is_favourite': product.product_id.is_favourite,
+                 'id': product.product_id.id, 'color': product.product_id.color,
+                 'is_best_Seller': product.product_id.is_best_Seller,
+                 'is_bargain_possible': product.product_id.is_bargain_possible,
+                 'offer_percentage': product.product_id.offer_percentage, 'category': product.product_id.category.name,
+                 'product_images': [{'id': image.id if image else '', 'image_url': image.image.url if image else ''}
+                                    for image in ProductImage.objects.filter(product=product.product_id)]} for product in products]
+

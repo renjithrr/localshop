@@ -61,6 +61,8 @@ class Order(AuditedModel, models.Model):
     shop = models.ForeignKey(Shop, related_name='shop_orders', on_delete=models.CASCADE, blank=True, null=True)
     customer = models.ForeignKey(Customer, related_name='customer_orders', on_delete=models.CASCADE,
                                  blank=True, null=True)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    rating = models.FloatField(default=5)
 
     def __str__(self):
         return str(self.id)

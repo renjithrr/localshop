@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 from customer.views import NearbyShop, CommonParamsView, OrderHistoryView, CustomerAddressView, ProductListing, \
     CustomerSignup, AccountEditView, CustomerFavouriteView, ProductVarientView, OrderView, ShopView, BannerView,\
-    TrendingShopsView
+    TrendingShopsView, IsRepeatPossibleView, IsDeliveryAvailableView
 
 router.register(r'address', CustomerAddressView, basename='product-pricing')
 
@@ -27,6 +27,8 @@ urlpatterns = [
     path('shop', ShopView.as_view()),
     path('banners', BannerView.as_view()),
     path('trending-shops', TrendingShopsView.as_view()),
+    path('is-repeat-possible', IsRepeatPossibleView.as_view()),
+    path('is-delivery-available', IsDeliveryAvailableView.as_view()),
 
 ]
 urlpatterns += router.urls

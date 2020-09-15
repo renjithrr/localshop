@@ -343,6 +343,7 @@ class DownloadProductDataCsvView(APIView, ResponseViewMixin):
             return export_to_csv(shop, sample)
 
         except Exception as e:
+
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 

@@ -8,7 +8,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
-    CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer
+    CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer,\
+    CustomerOrderHistorySerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
@@ -71,23 +72,25 @@ class CommonParamsView(APIView, ResponseViewMixin):
 class OrderHistoryView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 
-    token = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Pass token in headers",
-                                 type=openapi.TYPE_STRING)
+    # token = openapi.Parameter('customer_id', openapi.IN_QUERY, description="Pass token in headers",
+    #                              type=openapi.TYPE_STRING)
 
-    @swagger_auto_schema(tags=['customer'], manual_parameters=[token],
-                         responses={'500': GENERAL_ERROR, '200': CustomerOrderSerializer})
+    # @swagger_auto_schema(tags=['customer'], manual_parameters=[token],
+    #                      responses={'500': GENERAL_ERROR, '200': CustomerOrderSerializer})
     def get(self, request):
         try:
+
             customer = Customer.objects.get(user=request.user)
-            orders = customer.customer_orders
-            serializer = CustomerOrderSerializer(orders, many=True)
+            orders = customer.customer_orders.all()
+            serializer = CustomerOrderHistorySerializer(orders, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
                                                },
                                          message=SUCCESS)
         except Exception as e:
+
             db_logger.exception(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
 
 
 class CustomerAddressView(GenericViewSet, ResponseViewMixin):
@@ -389,6 +392,65 @@ class TrendingShopsView(APIView, ResponseViewMixin):
             serializer = NearbyShopSerializer(query_set, context={'location': location}, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'shops': serializer.data},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class IsRepeatPossibleView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[order_id])
+    def get(self, request):
+        try:
+
+            order_id = request.GET.get('order_id', 0)
+            order = Order.objects.get(id=order_id)
+            order_items = order.order_items.all()
+            available = True
+            for value in order_items:
+                if value.quantity < value.product_id.quantity:
+                    continue
+                else:
+                    available = False
+                    break
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'is_repeat_possible': available},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class IsDeliveryAvailableView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    address_id = openapi.Parameter('address_id', openapi.IN_QUERY, description="Address ID",
+                                    type=openapi.TYPE_STRING)
+    shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="Shop ID",
+                                   type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id, shop_id])
+    def get(self, request):
+        try:
+
+            address_id = request.GET.get('address_id', '')
+            shop_id = request.GET.get('shop_id', '')
+            shop = Shop.objects.get(id=shop_id)
+            address = Address.objects.get(id=address_id)
+            latitude = address.lat
+            longitude = address.long
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            distance1 = shop.location.distance(location)
+            if float(distance) > distance1:
+                is_delivery_available = True
+            else:
+                is_delivery_available = False
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'is_delivery_available': is_delivery_available},
                                          message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
