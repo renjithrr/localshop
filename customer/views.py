@@ -532,3 +532,65 @@ class ApplyCouponView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class DeliveryChargeView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    address_id = openapi.Parameter('address_id', openapi.IN_QUERY, description="Address ID",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
+    def post(self, request):
+        try:
+
+            address_id = request.data.get('address_id', '')
+            address = Address.objects.get(id=address_id)
+            latitude = address.lat
+            longitude = address.long
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            shop_id = request.data.get('shop_id', '')
+            shop = Shop.objects.get(id=shop_id)
+            distance1 = shop.location.distance(location)
+            if float(distance) < distance1:
+                return self.success_response(code='HTTP_200_OK',
+                                             data={'is_delivery_available': False},
+                                             message=SUCCESS)
+            delivery_charge = 0
+
+            total_amount = 0
+            products = request.data.get('products')
+            for value in products:
+                try:
+                    product = Product.objects.get(id=value['id'])
+                except Exception as e:
+                    product = ProductVarient.objects.get(id=value['id'])
+
+                total_amount += product.mrp * value['quantity']
+
+            delivery_details = shop.shop_delivery_options.all()
+            try:
+                delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
+                for value in delivery_details_list:
+                    if value == 2:
+                        delivery_charge = delivery_details.last().delivery_charge
+                    else:
+                        if total_amount < 25:
+                            delivery_charge = 25
+                        else:
+                            print(total_amount)
+                            delivery_charge = total_amount*(2/100)
+                        if total_amount >= delivery_details.last().free_delivery_for:
+                            delivery_charge = 0
+
+
+
+            except Exception as e:
+                db_logger.exception(e)
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'delivery_charge': delivery_charge},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
