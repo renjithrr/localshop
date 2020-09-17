@@ -1,4 +1,6 @@
 import logging
+import requests
+import json
 from django.contrib.gis.measure import D
 from django.contrib.gis.geos import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -14,7 +16,7 @@ from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
 from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon
-from customer.models import Customer, Address, CustomerFavouriteProduct, Order
+from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS
 from product.models import Product, Category, ProductVarient
 
 db_logger = logging.getLogger('db')
@@ -593,4 +595,77 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                                          message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class GenerateTokenView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    address_id = openapi.Parameter('address_id', openapi.IN_QUERY, description="Address ID",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
+    def post(self, request):
+        try:
+
+            address_id = request.data.get('address_id', '')
+            # address = Address.objects.get(id=address_id)
+            shop_id = request.data.get('shop_id', '')
+            total_amount = 0
+            delivery_charge = 0
+            shop = Shop.objects.get(id=shop_id)
+            products = request.data.get('products')
+
+            for value in products:
+                try:
+                    product = Product.objects.get(id=value['id'])
+                except Exception as e:
+                    product = ProductVarient.objects.get(id=value['id'])
+                if value['quantity'] > product.quantity:
+                    return self.success_response(code='HTTP_200_OK',
+                                                 data={'product_not_available': 'product ' + product.name +
+                                                                                ' is not available',
+                                                       'quantity_left': product.quantity},
+                                                 message=SUCCESS)
+                total_amount += product.mrp * value['quantity']
+            otp = OTPgenerator()
+            order = Order.objects.create(grand_total=total_amount, payment_status=PAYMENT_STATUS.pending,
+                                         status=ORDER_STATUS.pending, shop=shop,
+                                         customer=Customer.objects.get(user=request.user), otp=otp)
+            headers = {
+                'Content-Type': 'application/json',
+                'x-client-id': '275432e3853bd165afbf5272',
+                'x-client-secret': '2279c0ffb9550ad0f9e0652741c8d06a49409517',
+            }
+
+            data = json.dumps({ "orderId": order.id, "orderAmount":total_amount, "orderCurrency":"INR" })
+
+            response = requests.post('https://test.cashfree.com/api/v2/cftoken/order', headers=headers, data=data)
+            res = response.json()
+            token = res['cftoken']
+            delivery_details = shop.shop_delivery_options.all()
+            try:
+                delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
+                for value in delivery_details_list:
+                    if value == 2:
+                        delivery_charge = delivery_details.last().delivery_charge
+                    else:
+                        if total_amount < 25:
+                            delivery_charge = 25
+                        else:
+                            print(total_amount)
+                            delivery_charge = total_amount * (2 / 100)
+                        if total_amount >= delivery_details.last().free_delivery_for:
+                            delivery_charge = 0
+            except Exception as e:
+                pass
+            data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
+                    'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': {}}
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data=data,
+                                         message=SUCCESS)
+
+        except Exception as e:
+            db_logger.exception(e)
+
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
