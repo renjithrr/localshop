@@ -30,7 +30,9 @@ class NearbyShopSerializer(serializers.ModelSerializer):
 
     def get_distance(self, obj):
         location = self.context.get("location")
-        return round(obj.location.distance(location) * 100, 2)
+        if location:
+            return round(obj.location.distance(location) * 100, 2)
+        return ''
 
     def get_category(self, obj):
         return {'id': obj.shop_category.id, 'name': obj.shop_category.name}
