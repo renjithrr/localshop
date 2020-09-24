@@ -29,7 +29,8 @@ PAYMENT_CHOICES = Konstants(
     Kw(google_pay=1, label='Google pay'),
     Kw(paytm=2, label='Paytm'),
     Kw(credit_card=3, label='Credit card'),
-    Kw(debit_card=4, label='Debit card')
+    Kw(debit_card=4, label='Debit card'),
+    Kw(cod=5, label='COD')
 )
 
 

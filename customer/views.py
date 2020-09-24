@@ -12,12 +12,13 @@ from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
     CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer,\
-    CustomerOrderHistorySerializer
+    CustomerOrderHistorySerializer, CustomerProductSearchSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
 from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon
-from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS
+from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS,\
+    PAYMENT_CHOICES
 from product.models import Product, Category, ProductVarient
 
 db_logger = logging.getLogger('db')
@@ -647,6 +648,9 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 token = res['cftoken']
                 order.cod = False
                 order.save()
+            else:
+                order.payment_type = PAYMENT_CHOICES.cod
+                order.save()
             delivery_details = shop.shop_delivery_options.all()
             try:
                 delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
@@ -722,3 +726,42 @@ class GetLocationView(APIView, ResponseViewMixin):
             db_logger.exception(e)
 
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message='location not available')
+
+
+class SearchProductView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    # latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
+    #                              type=openapi.TYPE_STRING)
+    # longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+    #                               type=openapi.TYPE_STRING)
+    shop_id = openapi.Parameter('shop_id', openapi.IN_QUERY, description="shop_id",
+                                  type=openapi.TYPE_STRING)
+    search = openapi.Parameter('search', openapi.IN_QUERY, description="search products",type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[shop_id, search])
+    def get(self, request):
+        try:
+            # latitude = request.GET.get('latitude', 0)
+            # longitude = request.GET.get('longitude', 0)
+            # location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            # distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            # shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            searched_shops = Shop.objects.filter(business_name__icontains=request.GET.get('keyword', ''))
+            shop_serializer = NearbyShopSerializer(searched_shops, many=True)
+            products = Product.objects.filter(name__icontains=request.GET.get('keyword', ''),
+                                              is_hidden=False, is_deleted=False)
+        # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
+            product_serializer = CustomerProductSearchSerializer(products, many=True)
+            # product_serializer = CustomerProductSerializer(products, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'products': product_serializer.data,
+                                               'shops': shop_serializer.data
+                                               },
+                                     message=SUCCESS)
+        # return self.success_response(code='HTTP_200_OK',
+        #                              data={
+        #                                    },
+        #                              message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))

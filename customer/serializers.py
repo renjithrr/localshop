@@ -316,3 +316,26 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
                  'product_images': [{'id': image.id if image else '', 'image_url': image.image.url if image else ''}
                                     for image in ProductImage.objects.filter(product=product.product_id)]} for product in products]
 
+
+class CustomerProductSearchSerializer(serializers.ModelSerializer):
+    product_images = serializers.SerializerMethodField('get_product_images')
+    shop = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'brand', 'size', 'quantity', 'mrp', 'lowest_selling_rate', 'moq', 'offer_prize',
+                  'highest_selling_rate', 'rating', 'shop', 'hsn_code', 'description', 'is_favourite', 'color',
+                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images']
+    # product_images = serializers.SerializerMethodField('get_product_images')
+
+        # class Meta:
+        #     model = Product
+        # fields = ['id', 'name', 'brand', 'size', 'color', 'quantity', 'mrp', 'offer_prize', 'lowest_selling_rate',
+        #           'highest_selling_rate', 'product_images', 'shop', 'rating', 'description', 'is_favourite', 'moq']
+
+    def get_product_images(self, obj):
+        return [{'id': image.id if image else '', 'image_url': image.image.url if image else ''}
+         for image in ProductImage.objects.filter(product=obj)]
+
+    def get_shop(self, obj):
+        return obj.shop.id
