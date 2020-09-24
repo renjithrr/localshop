@@ -33,7 +33,7 @@ urlpatterns = [
     path('is-under-service-area', IsUnderServiceAreaView.as_view()),
     path('apply-coupon', ApplyCouponView.as_view()),
     path('delivery-charge', DeliveryChargeView.as_view()),
-    path('generate-token', GenerateTokenView.as_view()),
+    path('place-order', GenerateTokenView.as_view()),
     path('payment-update', PaymentUpdateView.as_view()),
     path('location', GetLocationView.as_view()),
 

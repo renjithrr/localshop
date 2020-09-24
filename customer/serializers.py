@@ -109,7 +109,7 @@ class CustomerOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'shop', 'created_at', 'grand_total', 'status','status_label', 'order_items','status',
-                  'customer', 'payment_type', 'payment_type_label', 'grand_total']
+                  'customer', 'payment_type', 'payment_type_label', 'grand_total', 'cod']
 
     @staticmethod
     @swagger_serializer_method(serializer_or_field=OrderSerializer(many=True))

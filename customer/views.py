@@ -610,6 +610,7 @@ class GenerateTokenView(APIView, ResponseViewMixin):
 
             address_id = request.data.get('address_id', '')
             # address = Address.objects.get(id=address_id)
+            token = ''
             shop_id = request.data.get('shop_id', '')
             total_amount = 0
             delivery_charge = 0
@@ -639,10 +640,13 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             }
 
             data = json.dumps({ "orderId": order.id, "orderAmount":total_amount, "orderCurrency":"INR" })
-
-            response = requests.post('https://test.cashfree.com/api/v2/cftoken/order', headers=headers, data=data)
-            res = response.json()
-            token = res['cftoken']
+            payment_type = request.data.get('payment_type', '')
+            if payment_type == 'online':
+                response = requests.post('https://test.cashfree.com/api/v2/cftoken/order', headers=headers, data=data)
+                res = response.json()
+                token = res['cftoken']
+                order.cod = False
+                order.save()
             delivery_details = shop.shop_delivery_options.all()
             try:
                 delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']

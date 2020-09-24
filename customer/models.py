@@ -64,6 +64,7 @@ class Order(AuditedModel, models.Model):
     otp = models.CharField(max_length=6, blank=True, null=True)
     rating = models.FloatField(default=5)
     payment_message = models.TextField(blank=True, null=True)
+    cod = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.id)
