@@ -1,6 +1,7 @@
 import logging
 import requests
 import json
+from geopy import Nominatim
 from django.contrib.gis.measure import D
 from django.contrib.gis.geos import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -669,3 +670,51 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             db_logger.exception(e)
 
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class PaymentUpdateView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[order_id])
+    def post(self, request):
+        try:
+
+            order = Order.objects.get(id=request.data.get('order_id'))
+            order.payment_status = request.data.get('payment_status')
+            if request.data.get('payment_status', ''):
+                order.payment_message = request.data.get('payment_status')
+            order.save()
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data={},
+                                         message=SUCCESS)
+
+        except Exception as e:
+            db_logger.exception(e)
+
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class GetLocationView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
+    #                                 type=openapi.TYPE_STRING)
+    # @swagger_auto_schema(tags=['customer'], manual_parameters=[order_id])
+    def get(self, request):
+        try:
+            locator = Nominatim(user_agent="myGeocoder")
+            coordinates = str(request.GET.get('latitude')) + ', ' + str(request.GET.get('longitude'))
+            location = locator.reverse(coordinates)
+            locations = ', '.join(location.raw['display_name'].split(', ')[:2])
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'location': locations,
+                                               'id': location.raw['place_id']},
+                                         message=SUCCESS)
+
+        except Exception as e:
+            db_logger.exception(e)
+
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message='location not available')

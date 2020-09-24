@@ -4,7 +4,7 @@ router = DefaultRouter()
 from customer.views import NearbyShop, CommonParamsView, OrderHistoryView, CustomerAddressView, ProductListing, \
     CustomerSignup, AccountEditView, CustomerFavouriteView, ProductVarientView, OrderView, ShopView, BannerView,\
     TrendingShopsView, IsRepeatPossibleView, IsDeliveryAvailableView, IsUnderServiceAreaView, ApplyCouponView,\
-    DeliveryChargeView, GenerateTokenView
+    DeliveryChargeView, GenerateTokenView, PaymentUpdateView, GetLocationView
 
 router.register(r'address', CustomerAddressView, basename='product-pricing')
 
@@ -34,6 +34,9 @@ urlpatterns = [
     path('apply-coupon', ApplyCouponView.as_view()),
     path('delivery-charge', DeliveryChargeView.as_view()),
     path('generate-token', GenerateTokenView.as_view()),
+    path('payment-update', PaymentUpdateView.as_view()),
+    path('location', GetLocationView.as_view()),
+
 
 
 ]
