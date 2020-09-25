@@ -81,6 +81,7 @@ class ShopCategory(models.Model):
 
 
 class ServiceArea(AuditedModel, models.Model):
+    name = models.CharField(max_length=70, blank=True, null=True)
     lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = models.PointField(default='POINT (0 0)',srid=4326)

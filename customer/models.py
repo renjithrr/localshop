@@ -62,6 +62,7 @@ class Order(AuditedModel, models.Model):
     customer = models.ForeignKey(Customer, related_name='customer_orders', on_delete=models.CASCADE,
                                  blank=True, null=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
+    customer_otp = models.CharField(max_length=6, blank=True, null=True)
     rating = models.FloatField(default=5)
     payment_message = models.TextField(blank=True, null=True)
     cod = models.BooleanField(default=True)

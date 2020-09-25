@@ -647,6 +647,8 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 res = response.json()
                 token = res['cftoken']
                 order.cod = False
+                otp = OTPgenerator()
+                order.customer_otp = otp
                 order.save()
             else:
                 order.payment_type = PAYMENT_CHOICES.cod
@@ -713,19 +715,60 @@ class GetLocationView(APIView, ResponseViewMixin):
     # @swagger_auto_schema(tags=['customer'], manual_parameters=[order_id])
     def get(self, request):
         try:
-            locator = Nominatim(user_agent="myGeocoder")
-            coordinates = str(request.GET.get('latitude')) + ', ' + str(request.GET.get('longitude'))
-            location = locator.reverse(coordinates)
-            locations = ', '.join(location.raw['display_name'].split(', ')[:2])
-            return self.success_response(code='HTTP_200_OK',
-                                         data={'location': locations,
-                                               'id': location.raw['place_id']},
-                                         message=SUCCESS)
+            # locator = Nominatim(user_agent="myGeocoder")
+            # coordinates = str(request.GET.get('latitude')) + ', ' + str(request.GET.get('longitude'))
+            # location = locator.reverse(coordinates)
+            # locations = ', '.join(location.raw['display_name'].split(', ')[:2])
+            # return self.success_response(code='HTTP_200_OK',
+            #                              data={'location': locations,
+            #                                    'id': location.raw['place_id']},
+            #                              message=SUCCESS)
+                location_list = []
+                id_list = []
+                latitude = request.GET.get('latitude')
+                longitude = request.GET.get('longitude')
+                location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+                for value in ServiceArea.objects.all():
+                    distance = value.location.distance(location)
+                    location_list.append(distance)
+                    id_list.append(value.id)
+                index = location_list.index(min(location_list))
+                location = ServiceArea.objects.get(id=id_list[index])
+                return self.success_response(code='HTTP_200_OK',
+                                             data={'id': location.id, 'location': location.name},
+                                             message=SUCCESS)
 
         except Exception as e:
             db_logger.exception(e)
 
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message='location not available')
+
+
+class GetAllLocationView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
+    #                                 type=openapi.TYPE_STRING)
+    # @swagger_auto_schema(tags=['customer'], manual_parameters=[order_id])
+    # @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
+    def get(self, request):
+        try:
+            location_list = []
+            latitude = request.GET.get('latitude')
+            longitude = request.GET.get('longitude')
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SERVICE_AREA_BASE_RADIUS').value
+            for value in ServiceArea.objects.all():
+                distance1 = value.location.distance(location)
+                if float(distance) > distance1:
+                    location_list.append({'id': value.id, 'location': value.name})
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data=location_list,
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class SearchProductView(APIView, ResponseViewMixin):

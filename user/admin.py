@@ -43,7 +43,7 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
 
 
 class ServiceAreaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'lat', 'long')
+    list_display = ('id', 'lat', 'long', 'name')
 
     def save_model(self, request, obj, form, change):
         longitude = obj.long
