@@ -2,7 +2,7 @@ from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
 from django.db.models import Sum
 
-from user.models import Shop, DeliveryOption, DELIVERY_CHOICES
+from user.models import Shop, DeliveryOption, DELIVERY_CHOICES, ServiceArea
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient,  Category
 from product.serializers import ProductListingSerializer
 from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES
@@ -341,3 +341,10 @@ class CustomerProductSearchSerializer(serializers.ModelSerializer):
 
     def get_shop(self, obj):
         return obj.shop.id
+
+
+class ServiceAreaSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ServiceArea
+        fields = ['id', 'name']

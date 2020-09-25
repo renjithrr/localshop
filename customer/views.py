@@ -12,7 +12,7 @@ from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
     CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer,\
-    CustomerOrderHistorySerializer, CustomerProductSearchSerializer
+    CustomerOrderHistorySerializer, CustomerProductSearchSerializer, ServiceAreaSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator
@@ -728,19 +728,25 @@ class GetLocationView(APIView, ResponseViewMixin):
                 latitude = request.GET.get('latitude')
                 longitude = request.GET.get('longitude')
                 location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+                base_distance = AppConfigData.objects.get(key='SERVICE_AREA_BASE_RADIUS').value
                 for value in ServiceArea.objects.all():
                     distance = value.location.distance(location)
-                    location_list.append(distance)
-                    id_list.append(value.id)
-                index = location_list.index(min(location_list))
-                location = ServiceArea.objects.get(id=id_list[index])
+                    if distance <= float(base_distance):
+                        location_list.append(distance)
+                        id_list.append(value.id)
+                try:
+                    index = location_list.index(min(location_list))
+                    location = ServiceArea.objects.get(id=id_list[index])
+                    data = {'id': location.id, 'location': location.name}
+                except Exception as e:
+                    data = {}
                 return self.success_response(code='HTTP_200_OK',
-                                             data={'id': location.id, 'location': location.name},
+                                             data=data,
                                              message=SUCCESS)
 
         except Exception as e:
             db_logger.exception(e)
-
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message='location not available')
 
 
@@ -753,18 +759,17 @@ class GetAllLocationView(APIView, ResponseViewMixin):
     # @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
     def get(self, request):
         try:
-            location_list = []
-            latitude = request.GET.get('latitude')
-            longitude = request.GET.get('longitude')
-            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
-            distance = AppConfigData.objects.get(key='SERVICE_AREA_BASE_RADIUS').value
-            for value in ServiceArea.objects.all():
-                distance1 = value.location.distance(location)
-                if float(distance) > distance1:
-                    location_list.append({'id': value.id, 'location': value.name})
-
+            # location_list = []
+            # latitude = request.GET.get('latitude')
+            # longitude = request.GET.get('longitude')
+            # location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            # distance = AppConfigData.objects.get(key='SERVICE_AREA_BASE_RADIUS').value
+            service_areas = ServiceArea.objects.all()
+            if 'search' in request.GET:
+                service_areas = service_areas.filter(name__icontains=request.GET.get('search'))
+            serializer = ServiceAreaSerializer(service_areas, many=True)
             return self.success_response(code='HTTP_200_OK',
-                                         data=location_list,
+                                         data=serializer.data,
                                          message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
