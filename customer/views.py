@@ -708,7 +708,7 @@ class PaymentUpdateView(APIView, ResponseViewMixin):
 
 
 class GetLocationView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     # order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
     #                                 type=openapi.TYPE_STRING)
@@ -751,7 +751,7 @@ class GetLocationView(APIView, ResponseViewMixin):
 
 
 class GetAllLocationView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     # order_id = openapi.Parameter('order_id', openapi.IN_QUERY, description="Order ID",
     #                                 type=openapi.TYPE_STRING)
@@ -794,7 +794,7 @@ class SearchProductView(APIView, ResponseViewMixin):
             # location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
             # distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
             # shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
-            searched_shops = Shop.objects.filter(business_name__icontains=request.GET.get('keyword', ''))
+            searched_shops = Shop.objects.filter(shop_name__icontains=request.GET.get('keyword', ''))
             shop_serializer = NearbyShopSerializer(searched_shops, many=True)
             products = Product.objects.filter(name__icontains=request.GET.get('keyword', ''),
                                               is_hidden=False, is_deleted=False)

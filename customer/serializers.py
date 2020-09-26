@@ -322,12 +322,13 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 class CustomerProductSearchSerializer(serializers.ModelSerializer):
     product_images = serializers.SerializerMethodField('get_product_images')
     shop = serializers.SerializerMethodField()
+    shop_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ['id', 'name', 'brand', 'size', 'quantity', 'mrp', 'lowest_selling_rate', 'moq', 'offer_prize',
                   'highest_selling_rate', 'rating', 'shop', 'hsn_code', 'description', 'is_favourite', 'color',
-                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images']
+                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images', 'shop_name']
     # product_images = serializers.SerializerMethodField('get_product_images')
 
         # class Meta:
@@ -341,6 +342,9 @@ class CustomerProductSearchSerializer(serializers.ModelSerializer):
 
     def get_shop(self, obj):
         return obj.shop.id
+
+    def get_shop_name(self, obj):
+        return obj.shop.shop_name
 
 
 class ServiceAreaSerializer(serializers.ModelSerializer):
