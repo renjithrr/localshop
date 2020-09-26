@@ -22,7 +22,7 @@ DELIVERY_CHOICES = Konstants(
     Kw(pickup=1, label='Pick up'),
     Kw(self_delivery=2, label='Self delivery'),
     Kw(bulk_delivery=3, label='Bulk delivery'),
-    Kw(shop_ship=4, label='Shop ship'),
+    Kw(townie_ship=4, label='Townie ship'),
 )
 
 PAYMENT_CHOICES = Konstants(

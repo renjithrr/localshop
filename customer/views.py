@@ -2,8 +2,11 @@ import logging
 import requests
 import json
 from geopy import Nominatim
+from fcm_django.models import FCMDevice
+from pyfcm import FCMNotification
 from django.contrib.gis.measure import D
 from django.contrib.gis.geos import *
+from django.conf import settings
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -630,14 +633,14 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                                                        'quantity_left': product.quantity},
                                                  message=SUCCESS)
                 total_amount += product.mrp * value['quantity']
-            otp = OTPgenerator()
+            # otp = OTPgenerator()
             order = Order.objects.create(grand_total=total_amount, payment_status=PAYMENT_STATUS.pending,
                                          status=ORDER_STATUS.pending, shop=shop,
-                                         customer=Customer.objects.get(user=request.user), otp=otp)
+                                         customer=Customer.objects.get(user=request.user))
             headers = {
                 'Content-Type': 'application/json',
-                'x-client-id': '275432e3853bd165afbf5272',
-                'x-client-secret': '2279c0ffb9550ad0f9e0652741c8d06a49409517',
+                'x-client-id': '25883f6357f2b14a1885899db38852',
+                'x-client-secret': '12ef6556720eccd161ca5d6de2e272ac034a53f0',
             }
 
             data = json.dumps({ "orderId": order.id, "orderAmount":total_amount, "orderCurrency":"INR" })
@@ -647,12 +650,14 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 res = response.json()
                 token = res['cftoken']
                 order.cod = False
-                otp = OTPgenerator()
-                order.customer_otp = otp
-                order.save()
+                # otp = OTPgenerator()
+                # order.customer_otp = otp
+                # order.save()
             else:
                 order.payment_type = PAYMENT_CHOICES.cod
-                order.save()
+                # order.save()
+            order.delivery_type = request.data.get('delivery_type')
+            order.save()
             delivery_details = shop.shop_delivery_options.all()
             try:
                 delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
@@ -669,9 +674,18 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                             delivery_charge = 0
             except Exception as e:
                 pass
+
             data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
                     'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': {}}
-
+            try:
+                device = FCMDevice.objects.get(user=request.user, active=True).registration_id
+                message = {"data": {"order_id": order.id}}
+                message_body = 'A new order has placed'
+                push_service = FCMNotification(api_key=settings.FCM_KEY)
+                push_service.notify_single_device(registration_id=device, message_body=message_body,
+                                                  data_message=message)
+            except Exception as e:
+                pass
             return self.success_response(code='HTTP_200_OK',
                                          data=data,
                                          message=SUCCESS)

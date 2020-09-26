@@ -60,7 +60,7 @@ class NearbyShopSerializer(serializers.ModelSerializer):
         pick_up = False
         for value in pickup:
             for data in value.delivery_type:
-                if int(data) == DELIVERY_CHOICES.shop_ship:
+                if int(data) == DELIVERY_CHOICES.pickup:
                     pick_up = True
                     break
 
@@ -257,7 +257,7 @@ class CustomerShopSerializer(serializers.ModelSerializer):
         pick_up = False
         for value in pickup:
             for data in value.delivery_type:
-                if int(data) == DELIVERY_CHOICES.shop_ship:
+                if int(data) == DELIVERY_CHOICES.pickup:
                     pick_up = True
                     break
 
@@ -321,14 +321,14 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 
 class CustomerProductSearchSerializer(serializers.ModelSerializer):
     product_images = serializers.SerializerMethodField('get_product_images')
-    shop = serializers.SerializerMethodField()
-    shop_name = serializers.SerializerMethodField()
+    shop_details = serializers.SerializerMethodField()
+    # shop_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ['id', 'name', 'brand', 'size', 'quantity', 'mrp', 'lowest_selling_rate', 'moq', 'offer_prize',
-                  'highest_selling_rate', 'rating', 'shop', 'hsn_code', 'description', 'is_favourite', 'color',
-                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images', 'shop_name']
+                  'highest_selling_rate', 'rating', 'shop_details', 'hsn_code', 'description', 'is_favourite', 'color',
+                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images']
     # product_images = serializers.SerializerMethodField('get_product_images')
 
         # class Meta:
@@ -340,11 +340,10 @@ class CustomerProductSearchSerializer(serializers.ModelSerializer):
         return [{'id': image.id if image else '', 'image_url': image.image.url if image else ''}
          for image in ProductImage.objects.filter(product=obj)]
 
-    def get_shop(self, obj):
-        return obj.shop.id
+    def get_shop_details(self, obj):
+        return NearbyShopSerializer(obj.shop).data
 
-    def get_shop_name(self, obj):
-        return obj.shop.shop_name
+
 
 
 class ServiceAreaSerializer(serializers.ModelSerializer):

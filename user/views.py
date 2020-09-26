@@ -489,3 +489,35 @@ class ShopAvailabilityView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class OrderProcessView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'available': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #     }))
+    def post(self, request):
+        order_id = request.data.get('order_id')
+        accept = request.data.get('is_accepted')
+        try:
+            order = Order.objects.get(id=order_id)
+            if accept:
+                order.status = ORDER_STATUS.accepted
+                vendor_otp = OTPgenerator()
+                customer_otp = OTPgenerator()
+                order.otp = vendor_otp
+                order.customer_otp = customer_otp
+                order.save()
+
+            else:
+                order.status = ORDER_STATUS.rejected
+
+            return self.success_response(code='HTTP_200_OK', message=SUCCESS,
+                                         data={})
+
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
