@@ -44,6 +44,7 @@ class NearbyShop(APIView, ResponseViewMixin):
             latitude = request.GET.get('latitude', 0)
             longitude = request.GET.get('longitude', 0)
             location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            print(location)
             distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
             query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
             if request.GET.get('shop_category', ''):
@@ -751,7 +752,8 @@ class GetLocationView(APIView, ResponseViewMixin):
                 try:
                     index = location_list.index(min(location_list))
                     location = ServiceArea.objects.get(id=id_list[index])
-                    data = {'id': location.id, 'location': location.name}
+                    serializer = ServiceAreaSerializer(location)
+                    data = serializer.data
                 except Exception as e:
                     data = {}
                 return self.success_response(code='HTTP_200_OK',
@@ -827,3 +829,25 @@ class SearchProductView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+
+
+class TrendingOfferView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
+                                   type=openapi.TYPE_STRING)
+    longitude = openapi.Parameter('longitude', openapi.IN_QUERY, description="longitude",
+                                    type=openapi.TYPE_STRING)
+    @swagger_auto_schema(tags=['customer'], manual_parameters=[latitude, longitude],
+                         responses={'500': GENERAL_ERROR, '200': NearbyShopSerializer})
+    def get(self, request):
+        try:
+            coupon = Coupon.objects.filter(is_active=True)
+            query_set = Shop.objects.filter(id__in=coupon.values_list('shops', flat=True))
+            serializer = ShopBannerSerializer(query_set, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'shops': serializer.data},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

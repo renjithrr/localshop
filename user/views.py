@@ -1,5 +1,6 @@
 import logging
 import json
+import requests
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -510,6 +511,20 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 customer_otp = OTPgenerator()
                 order.otp = vendor_otp
                 order.customer_otp = customer_otp
+                try:
+                    customer_address = order.customer.customer_addresses.last()
+                    print(customer_address.lat)
+                    data = {
+                        "order_id": "1",
+                        "lat": 1.2,
+                        "long": 1.2
+                    }
+                    response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                                             headers = {'content-type': 'application/json'})
+                    print(response.text)
+                except Exception as e:
+                    print(e)
+                    # logging.exception(e)
                 order.save()
 
             else:
@@ -519,5 +534,6 @@ class OrderProcessView(APIView, ResponseViewMixin):
                                          data={})
 
         except Exception as e:
-            db_logger.exception(e)
+            # db_logger.exception(e)
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

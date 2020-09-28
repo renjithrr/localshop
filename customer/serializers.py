@@ -350,4 +350,4 @@ class ServiceAreaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceArea
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'lat', 'long']
