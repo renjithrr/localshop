@@ -680,11 +680,9 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                     'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': {}}
             try:
                 device = FCMDevice.objects.get(user=request.user, active=True).registration_id
-                message = {'data': {'order_id': order.id}, 'type': 'new_order'}
-                message_body = 'A new order has placed'
+                message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
                 push_service = FCMNotification(api_key=settings.FCM_KEY)
-                push_service.notify_single_device(registration_id=device, message_body=message_body,
-                                                  data_message=message)
+                push_service.notify_single_device(registration_id=device, data_message=message)
             except Exception as e:
                 logging.exception(e)
             return self.success_response(code='HTTP_200_OK',
