@@ -23,7 +23,7 @@ class AppConfigDataAdmin(admin.ModelAdmin):
 
 
 class ShopCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'card_type')
 
 
 class PaymentMethodAdmin(admin.ModelAdmin):
