@@ -34,6 +34,13 @@ PAYMENT_CHOICES = Konstants(
 )
 
 
+CARD_CHOICES = Konstants(
+    Kw(small=1, label='Small'),
+    Kw(medium=2, label='Medium'),
+    Kw(big=3, label='Big')
+)
+
+
 class AppUser(AbstractUser):
 
     objects = UserManager()
@@ -75,6 +82,8 @@ class ShopCategory(models.Model):
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True, null=True)
     fssai = models.BooleanField(default=False)
+    card_type = models.IntegerField(choices=CARD_CHOICES.choices(), blank=True, null=True)
+
 
     def __str__(self):
         return self.name

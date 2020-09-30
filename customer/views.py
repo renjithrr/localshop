@@ -63,7 +63,7 @@ class CommonParamsView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            shop_choices = [{'id': shop.id, 'category': shop.name}
+            shop_choices = [{'id': shop.id, 'category': shop.name, 'card_type': shop.card_type}
                             for shop in ShopCategory.objects.all()]
             # payment_methods = [{'id': method.id, 'method': method.payment_type}
             #                    for method in PaymentMethod.objects.all()]
