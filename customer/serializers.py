@@ -35,7 +35,7 @@ class NearbyShopSerializer(serializers.ModelSerializer):
         return ''
 
     def get_category(self, obj):
-        return {'id': obj.shop_category.id, 'name': obj.shop_category.name}
+        return {'id': obj.shop_category.id, 'name': obj.shop_category.name, 'card_type': obj.shop_category.card_type}
 
     def get_pick_up(self, obj):
         pickup = obj.shop_delivery_options.all()
@@ -232,7 +232,7 @@ class CustomerShopSerializer(serializers.ModelSerializer):
         return obj.image.url if obj.image else ''
 
     def get_category(self, obj):
-        return {'id': obj.shop_category.id, 'name': obj.shop_category.name}
+        return {'id': obj.shop_category.id, 'name': obj.shop_category.name, 'card_type': obj.shop_category.card_type}
 
     def get_pick_up(self, obj):
         pickup = obj.shop_delivery_options.all()
