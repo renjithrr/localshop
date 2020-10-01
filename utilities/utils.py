@@ -9,7 +9,6 @@ from django.apps import apps
 from django.http import HttpResponse
 
 
-
 class Kw:
     def __init__(self, label=None, **kwargs):
         assert (len(kwargs) == 1)
@@ -211,3 +210,53 @@ def export_to_csv(shop, sample):
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+
+def payment_calculation(mrp, delivery_type, delivery_method):
+    from user.models import AppConfigData
+    from user.models import DELIVERY_CHOICES
+    pg_deduction = AppConfigData.objects.get(key='PAYMENT_GATEWAY_PERCENTAGE').value
+    pg_deduction = float(pg_deduction)/100
+    townie_referal = AppConfigData.objects.get(key='TOWNIE_REFERRAL_PERCENTAGE').value
+    townie_referal = float(townie_referal)/100
+    referal_fee = townie_referal * mrp * 1.18
+    tsf = 0.0236 * mrp
+    if delivery_type == DELIVERY_CHOICES.pickup:
+        tcs = 0.00990099 * mrp
+        tdr = pg_deduction * mrp
+        townie_payment = referal_fee + tcs + tdr
+        shop_payment = mrp - townie_payment
+    elif delivery_type == DELIVERY_CHOICES.self_delivery:
+        self_shipping_charge = delivery_method.delivery_charge
+        total_cost = mrp + self_shipping_charge
+        tcs = 0.00990099 * total_cost
+        tdr = pg_deduction * total_cost
+        townie_payment = referal_fee + tcs + tdr
+        shop_payment = total_cost - townie_payment
+
+    elif delivery_type == DELIVERY_CHOICES.townie_ship:
+        if mrp >= delivery_method.free_delivery_for:
+            total_cost = mrp
+            tcs = 0.00990099 * mrp
+            tdr = pg_deduction * total_cost
+            if tsf < 25:
+                tsf = 25
+            townie_payment = referal_fee + tcs + tdr + tsf
+            shop_payment = total_cost - townie_payment
+        else:
+            if tsf < 25:
+                tsf = 25
+            total_cost = mrp + tsf
+            tcs = 0.00990099 * mrp
+            tdr = pg_deduction * total_cost
+            townie_payment = referal_fee + tcs + tdr + tsf
+            shop_payment = total_cost - townie_payment
+
+    else:
+        total_cost = mrp
+        tcs = 0.00990099 * mrp
+        tdr = pg_deduction * total_cost
+        townie_payment = referal_fee + tcs + tdr
+        shop_payment = total_cost - townie_payment
+    print(shop_payment, townie_payment)
+    return round(townie_payment, 2), round(shop_payment,2)

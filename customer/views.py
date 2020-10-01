@@ -18,8 +18,9 @@ from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, 
     CustomerOrderHistorySerializer, CustomerProductSearchSerializer, ServiceAreaSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
-from utilities.utils import deliver_sms, OTPgenerator
-from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon
+from utilities.utils import deliver_sms, OTPgenerator, payment_calculation
+from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon,\
+    DELIVERY_CHOICES
 from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS,\
     PAYMENT_CHOICES
 from product.models import Product, Category, ProductVarient
@@ -576,22 +577,20 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
 
                 total_amount += product.mrp * value['quantity']
 
-            delivery_details = shop.shop_delivery_options.all()
+            delivery_details = shop.shop_delivery_options.last()
             try:
-                delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
-                for value in delivery_details_list:
-                    if value == 2:
-                        delivery_charge = delivery_details.last().delivery_charge
+                # payment_calculation(total_amount, delivery_details)
+                delivery_type = delivery_details.delivery_type
+                delivery_type = list(map(int, delivery_type))
+                if DELIVERY_CHOICES.self_delivery in delivery_type:
+                    delivery_charge = delivery_details.delivery_charge
+                elif DELIVERY_CHOICES.townie_ship in delivery_type:
+                    if float(total_amount) >= delivery_details.free_delivery_for:
+                        delivery_charge = 0
                     else:
-                        if total_amount < 25:
-                            delivery_charge = 25
-                        else:
-                            print(total_amount)
-                            delivery_charge = total_amount*(2/100)
-                        if total_amount >= delivery_details.last().free_delivery_for:
-                            delivery_charge = 0
-
-
+                        delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
+                elif DELIVERY_CHOICES.bulk_delivery in delivery_type:
+                    delivery_charge = 0
 
             except Exception as e:
                 db_logger.exception(e)
@@ -659,25 +658,25 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 # order.save()
             order.delivery_type = request.data.get('delivery_type')
             order.save()
-            delivery_details = shop.shop_delivery_options.all()
+            delivery_details = shop.shop_delivery_options.last()
+            delivery_type = int(request.data.get('delivery_type'))
             try:
-                delivery_details_list = delivery_details.values('delivery_type', 'id')[0]['delivery_type']
-                for value in delivery_details_list:
-                    if value == 2:
-                        delivery_charge = delivery_details.last().delivery_charge
+                if delivery_type == DELIVERY_CHOICES.self_delivery:
+                    delivery_charge = delivery_details.delivery_charge
+                elif delivery_type == DELIVERY_CHOICES.townie_ship:
+                    if float(total_amount) >= delivery_details.free_delivery_for:
+                        delivery_charge = 0
                     else:
-                        if total_amount < 25:
-                            delivery_charge = 25
-                        else:
-                            print(total_amount)
-                            delivery_charge = total_amount * (2 / 100)
-                        if total_amount >= delivery_details.last().free_delivery_for:
-                            delivery_charge = 0
+                        delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
+                elif delivery_type == DELIVERY_CHOICES.bulk_delivery:
+                    delivery_charge = 0
             except Exception as e:
                 pass
-
+            townie_payment, vendor_payment = payment_calculation(total_amount,delivery_type,  delivery_details)
+            vendor_split = [{'vendorId': '', 'commissionAmount': townie_payment},
+                            {'vendorId': '', 'commissionAmount': vendor_payment}]
             data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
-                    'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': {}}
+                    'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': vendor_split}
             try:
                 device = FCMDevice.objects.get(user=request.user, active=True).registration_id
                 message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
