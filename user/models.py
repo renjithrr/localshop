@@ -127,6 +127,7 @@ class Shop(AuditedModel, models.Model):
     logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     rating = models.FloatField(default=5)
     available = models.BooleanField(default=True)
+    vendor_id = models.CharField(max_length=30, blank=True, null=True)
     service_area = models.ForeignKey(ServiceArea, related_name='service_area_shops', on_delete=models.CASCADE,
                                       blank=True, null=True)
 
