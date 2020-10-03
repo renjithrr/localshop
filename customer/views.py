@@ -505,7 +505,7 @@ class ApplyCouponView(APIView, ResponseViewMixin):
     #         'email': openapi.Schema(type=openapi.TYPE_STRING),
     #     }))
     def post(self, request):
-        address_id = request.data.get('address_id')
+        # address_id = request.data.get('address_id')
         products = request.data.get('products')
         discount = None
         total_amount = 0
@@ -518,8 +518,11 @@ class ApplyCouponView(APIView, ResponseViewMixin):
                     product = Product.objects.get(id=value['id'])
                 except Exception as e:
                     product = ProductVarient.objects.get(id=value['id'])
-
-                total_amount += product.mrp * value['quantity']
+                if value.get('bargain_amount'):
+                    if product.lowest_selling_rate < value.get('bargain_amount') < product.highest_selling_rate:
+                        total_amount += value.get('bargain_amount') * value['quantity']
+                else:
+                    total_amount += product.mrp * value['quantity']
                 shop = product.shop
             try:
                 coupon = Coupon.objects.get(shops=shop, is_active=True, code=request.data.get('coupon_code'))
@@ -632,7 +635,12 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                                                                                 ' is not available',
                                                        'quantity_left': product.quantity},
                                                  message=SUCCESS)
-                total_amount += product.mrp * value['quantity']
+                if value.get('bargain_amount'):
+                    if product.lowest_selling_rate < value.get('bargain_amount') < product.highest_selling_rate:
+                        total_amount += value.get('bargain_amount') * value['quantity']
+                else:
+                    print(product.mrp, product.lowest_selling_rate, product.highest_selling_rate)
+                    total_amount += product.mrp * value['quantity']
             # otp = OTPgenerator()
             order = Order.objects.create(grand_total=total_amount, payment_status=PAYMENT_STATUS.pending,
                                          status=ORDER_STATUS.pending, shop=shop,

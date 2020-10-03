@@ -258,5 +258,4 @@ def payment_calculation(mrp, delivery_type, delivery_method):
         tdr = pg_deduction * total_cost
         townie_payment = referal_fee + tcs + tdr
         shop_payment = total_cost - townie_payment
-    print(shop_payment, townie_payment)
     return round(townie_payment, 2), round(shop_payment,2)
