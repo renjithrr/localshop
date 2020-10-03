@@ -76,6 +76,15 @@ class Product(AuditedModel, models.Model):
     offer_percentage = models.CharField(max_length=10, blank=True, null=True)
     shop = models.ForeignKey(Shop, related_name='shop_products', blank=True, null=True, on_delete=models.CASCADE)
 
+    def get_is_bargain_possible(self):
+        if self.lowest_selling_rate and self.highest_selling_rate:
+            return True
+        return False
+
+    def save(self, *args, **kwargs):
+        self.is_bargain_possible = self.get_is_bargain_possible()
+        super(Product, self).save(*args, **kwargs)
+
 
     def __str__(self):
         return self.name
@@ -107,7 +116,18 @@ class ProductVarient(AuditedModel, models.Model):
     is_hidden= models.BooleanField(default=False)
     rating = models.FloatField(default=5)
     is_favourite = models.BooleanField(default=False)
+    is_bargain_possible = models.BooleanField(default=False)
     shop = models.ForeignKey(Shop, related_name='shop_product_varients', blank=True, null=True, on_delete=models.CASCADE)
+
+    def get_is_bargain_possible(self):
+        if self.lowest_selling_rate and self.highest_selling_rate:
+            return True
+        return False
+
+    def save(self, *args, **kwargs):
+        self.is_bargain_possible = self.get_is_bargain_possible()
+        super(ProductVarient, self).save(*args, **kwargs)
+
 
 
 class ProductVarientImage(models.Model):

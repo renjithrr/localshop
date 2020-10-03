@@ -45,7 +45,6 @@ class NearbyShop(APIView, ResponseViewMixin):
             latitude = request.GET.get('latitude', 0)
             longitude = request.GET.get('longitude', 0)
             location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
-            print(location)
             distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
             query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
             if request.GET.get('shop_category', ''):

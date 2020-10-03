@@ -38,13 +38,12 @@ class NearbyShopSerializer(serializers.ModelSerializer):
         return {'id': obj.shop_category.id, 'name': obj.shop_category.name, 'card_type': obj.shop_category.card_type}
 
     def get_pick_up(self, obj):
-        pickup = obj.shop_delivery_options.all()
+        delivery_option = obj.shop_delivery_options.all().last()
         pick_up = False
-        for value in pickup:
-            for data in value.delivery_type:
-                if int(data) == DELIVERY_CHOICES.pickup:
-                    pick_up = True
-                    break
+        for value in delivery_option.delivery_type:
+            if int(value) == DELIVERY_CHOICES.pickup:
+                pick_up = True
+                break
 
         return pick_up
         # for i in obj.shop_delivery_options.all():
@@ -56,13 +55,13 @@ class NearbyShopSerializer(serializers.ModelSerializer):
         # return True if pickup else False
 
     def get_home_delivery(self, obj):
-        pickup = obj.shop_delivery_options.all()
+        delivery_option = obj.shop_delivery_options.all().last()
         pick_up = False
-        for value in pickup:
-            for data in value.delivery_type:
-                if int(data) == DELIVERY_CHOICES.pickup:
-                    pick_up = True
-                    break
+        for value in delivery_option.delivery_type:
+            if int(value) == DELIVERY_CHOICES.bulk_delivery or int(value) == DELIVERY_CHOICES.self_delivery \
+                    or int(value) == DELIVERY_CHOICES.townie_ship:
+                pick_up = True
+                break
 
         return pick_up
 
@@ -190,7 +189,7 @@ class VarientSerializer(serializers.ModelSerializer):
         model = ProductVarient
         fields = ['product', 'size', 'color', 'brand', 'quantity', 'description', 'mrp', 'offer_prize',
                   'lowest_selling_rate', 'highest_selling_rate', 'tax_rate', 'moq', 'unit', 'images', 'rating',
-                  'is_favourite', 'name', 'id']
+                  'is_favourite', 'name', 'id', 'is_bargain_possible']
 
     def get_name(self, obj):
         return obj.product.name
