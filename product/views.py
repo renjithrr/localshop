@@ -303,11 +303,17 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
                 existing_product = Product.objects.filter(product_id=row[0])
                 if existing_product:
                     update_values = {'name': row[1], 'category': category, 'size': row[3], 'color': row[4],
-                                     'quantity': row[5], 'description': row[6], 'brand': row[7], 'mrp': row[8],
-                                     'offer_prize': row[9], 'lowest_selling_rate': row[10],
-                                     'highest_selling_rate': row[11],'hsn_code': row[12], 'tax_rate': row[13],
+                                     'quantity': row[5], 'description': row[6], 'brand': row[7], 'mrp': row[8]
+                        ,'hsn_code': row[12], 'tax_rate': row[13],
                                      'moq': row[14], 'unit': row[15]
                                      }
+                    if row[9]:
+                        update_values['offer_prize'] = row[9]
+                    if row[10]:
+                        update_values['lowest_selling_rate'] = row[10]
+                    if row[11]:
+                        update_values['highest_selling_rate'] = row[11]
+
                     existing_product.update(**update_values)
 
                 else:
@@ -318,15 +324,25 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
                     except Exception as e:
                         db_logger.exception(e)
                     shop = Shop.objects.filter(user=request.user).last()
-                    bulk_mgr.add(Product(name=row[1], category=category,
+                    product = Product(name=row[1], category=category,
                                          size=row[3], color=row[4], quantity=row[5],description=row[6],
-                                         brand=row[7], mrp=row[8], offer_prize=row[9], lowest_selling_rate=row[10],
-                                         highest_selling_rate=row[11], hsn_code=row[12], product_id=product_id,
-                                         tax_rate=row[13], moq=row[14], unit=row[15], shop=shop))
+                                         brand=row[7], mrp=row[8]
+                                      , hsn_code=row[12], product_id=product_id,
+                                         tax_rate=row[13], moq=row[14], unit=row[15], shop=shop)
+                    if row[9]:
+                        product.offer_prize = row[9]
+                    if row[10]:
+                        product.lowest_selling_rate = row[10]
+                    if row[11]:
+                        product.highest_selling_rate = row[11]
+
+
+                    bulk_mgr.add(product)
             bulk_mgr.done()
             return self.success_response(code='HTTP_200_OK',
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
+            print(e)
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
