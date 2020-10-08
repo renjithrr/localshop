@@ -37,7 +37,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
     def post(self, request):
         mobile_number = request.data.get('mobile_number')
         try:
-            if request.data.get('is_customer', ' '):
+            if request.data.get('is_customer', ''):
                 role = USER_TYPE_CHOICES.customer
                 user, created = AppUser.objects.get_or_create(
                     username=mobile_number,
@@ -163,7 +163,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
     def create(self, request):
-        data = request.data
+        data = json.loads(request.data['data'])
         user_id = data['user']
         try:
 
@@ -177,8 +177,8 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 if request.FILES.get('gst_image', ''):
                     shop.gst_image = request.FILES['gst_image']
                 shop.save()
-                if request.data.get('email', ''):
-                    shop.user.email = request.data.get('email', '')
+                if data['email']:
+                    shop.user.email = data['email']
                     shop.user.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
@@ -285,7 +285,7 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
 
     def retrieve(self, request, pk=None):
         try:
-            delivery = DeliveryOption.objects.get(id=pk)
+            delivery = DeliveryOption.objects.get(shop_id=pk)
             serializer = DeliveryRetrieveSerializer(delivery)
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,

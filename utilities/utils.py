@@ -1,4 +1,5 @@
 import math, random
+import logging
 import string
 import boto3
 import xlwt
@@ -7,6 +8,8 @@ import csv
 from collections import defaultdict
 from django.apps import apps
 from django.http import HttpResponse
+
+db_logger = logging.getLogger('db')
 
 
 class Kw:
@@ -116,10 +119,9 @@ def deliver_sms(mobile_number, otp):
                     }
                 }
             })
-        print(response)
-
+        db_logger.debug('pinpoint sms to : {0} => {1}'.format(mobile_number, str(response)))
     except Exception as e:
-        pass
+        db_logger.exception(e)
     return True
 
 
