@@ -50,34 +50,34 @@ class ProductView(APIView, ResponseViewMixin):
                 serializer = ProductSerializer(data=request.data)
             if serializer.is_valid():
                 product = serializer.save()
-            if request.data.get('image_ids', ''):
-                existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''))
-                if existing_images:
-                    existing_images.delete()
-                for value in request.data.get('image_ids'):
-                    try:
-                        image = ProductImage.objects.get(id=value)
-                        image.product = product
-                        image.save()
-                    except Exception as e:
-                        db_logger.exception(e)
-                        pass
-            try:
-                if not request.data.get('product_id'):
-                    product_id = id_generator()
-                    product.product_id = product_id
-                    product.save()
-            except Exception as e:
-                db_logger.exception(e)
-                pass
+                if request.data.get('image_ids', ''):
+                    existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''))
+                    if existing_images:
+                        existing_images.delete()
+                    for value in request.data.get('image_ids'):
+                        try:
+                            image = ProductImage.objects.get(id=value)
+                            image.product = product
+                            image.save()
+                        except Exception as e:
+                            db_logger.exception(e)
+                            pass
+                try:
+                    if not request.data.get('product_id'):
+                        product_id = id_generator()
+                        product.product_id = product_id
+                        product.save()
+                except Exception as e:
+                    db_logger.exception(e)
+                    pass
 
-            try:
-                shop = Shop.objects.get(user=request.user)
-                product.shop = shop
-                product.save()
-            except Exception as e:
-                db_logger.exception(e)
-                pass
+                try:
+                    shop = Shop.objects.get(user=request.user)
+                    product.shop = shop
+                    product.save()
+                except Exception as e:
+                    db_logger.exception(e)
+                    pass
 
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
@@ -85,6 +85,7 @@ class ProductView(APIView, ResponseViewMixin):
                                          data={'product_id': product.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
         except Exception as e:
+            print(e)
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
@@ -241,43 +242,51 @@ class ProductVarientView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['product'], request_body=ProductVarientSerializer)
     def update(self, request, pk=None):
-        if request.data.get('delete'):
-            product = Product.objects.get(id=pk)
-            product.is_deleted = True
-            product.save()
-        elif request.data.get('hide'):
-            product = Product.objects.get(id=pk)
-            if request.data.get('hide') == 'true':
-                product.is_hidden = True
-            else:
-                product.is_hidden = False
-            product.save()
-        else:
-            try:
-                varient = ProductVarient.objects.get(id=pk)
-                serializer = ProductVarientSerializer(instance=varient, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    if request.data.get('image_ids', ''):
-                        existing_images = ProductVarientImage.objects.exclude(id__in=request.data.get('image_ids', ''))
-                        if existing_images:
-                            existing_images.delete()
-                        for value in request.data.get('image_ids'):
-                            try:
-                                image = ProductVarientImage.objects.get(id=value)
-                                image.varient = varient
-                                image.save()
-                            except Exception as e:
-                                db_logger.exception(e)
-                    return self.success_response(code='HTTP_200_OK',
-                                                     data=serializer.data,
-                                                     message=SUCCESS)
+        try:
+            if request.data.get('delete'):
+                product = Product.objects.get(id=pk)
+                product.is_deleted = True
+                product.save()
+            elif 'hide' in request.data:
+                product = Product.objects.get(id=pk)
+                if request.data.get('hide'):
+                    product.is_hidden = True
                 else:
-                    return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+                    product.is_hidden = False
+                product.save()
+            else:
+                try:
+                    varient = ProductVarient.objects.get(id=pk)
+                    serializer = ProductVarientSerializer(instance=varient, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        if request.data.get('image_ids', ''):
+                            existing_images = ProductVarientImage.objects.exclude(id__in=request.data.get('image_ids', ''))
+                            if existing_images:
+                                existing_images.delete()
+                            for value in request.data.get('image_ids'):
+                                try:
+                                    image = ProductVarientImage.objects.get(id=value)
+                                    image.varient = varient
+                                    image.save()
+                                except Exception as e:
+                                    db_logger.exception(e)
+                        return self.success_response(code='HTTP_200_OK',
+                                                         data=serializer.data,
+                                                         message=SUCCESS)
+                    else:
+                        return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
-            except Exception as e:
-                db_logger.exception(e)
-                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+                except Exception as e:
+                    db_logger.exception(e)
+                    return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={},
+                                         message=SUCCESS)
+        except Exception as e:
+            print(e)
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class ProductDataCsvView(APIView, ResponseViewMixin):
@@ -313,6 +322,7 @@ class ProductDataCsvView(APIView, ResponseViewMixin):
                         update_values['lowest_selling_rate'] = row[10]
                     if row[11]:
                         update_values['highest_selling_rate'] = row[11]
+
 
                     existing_product.update(**update_values)
 

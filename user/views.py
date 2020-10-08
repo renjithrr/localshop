@@ -163,7 +163,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
     def create(self, request):
-        data = json.loads(request.data['data'])
+        data = request.data
         user_id = data['user']
         try:
 
@@ -179,7 +179,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 shop.save()
                 if request.data.get('email', ''):
                     shop.user.email = request.data.get('email', '')
-                    shop.save()
+                    shop.user.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
@@ -324,7 +324,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
                                          message=SUCCESS)
-        except Shop.DoesNotExist:
+        except UserPaymentMethod.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
