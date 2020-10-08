@@ -9,7 +9,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand', 'product_id', 'mrp',
-                  'offer_prize', 'hsn_code', 'moq', 'tax_rate', 'unit']
+                  'offer_prize', 'hsn_code', 'moq', 'tax_rate', 'unit', 'lowest_selling_rate', 'highest_selling_rate']
 
 
 class ProductRetrieveSerializer(serializers.ModelSerializer):
