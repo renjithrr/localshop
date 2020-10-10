@@ -29,6 +29,8 @@ PAYMENT_STATUS = Konstants(
 
 class Customer(models.Model):
     user = models.OneToOneField(AppUser, related_name='customer', on_delete=models.CASCADE)
+    bargain_count = models.IntegerField(default=0)
+    bargain_upto = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.user.username

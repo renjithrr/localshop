@@ -5,7 +5,7 @@ from customer.views import NearbyShop, CommonParamsView, OrderHistoryView, Custo
     CustomerSignup, AccountEditView, CustomerFavouriteView, ProductVarientView, OrderView, ShopView, BannerView,\
     TrendingShopsView, IsRepeatPossibleView, IsDeliveryAvailableView, IsUnderServiceAreaView, ApplyCouponView,\
     DeliveryChargeView, GenerateTokenView, PaymentUpdateView, GetLocationView, SearchProductView, GetAllLocationView,\
-    TrendingOfferView
+    TrendingOfferView, FavouriteProductView, BargainPriceView
 
 router.register(r'address', CustomerAddressView, basename='product-pricing')
 
@@ -40,6 +40,8 @@ urlpatterns = [
     path('search', SearchProductView.as_view()),
     path('all-locations', GetAllLocationView.as_view()),
     path('trending-offers', TrendingOfferView.as_view()),
+    path('favourite-products', FavouriteProductView.as_view()),
+    path('bargain-price', BargainPriceView.as_view()),
 
 
 

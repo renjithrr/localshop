@@ -2,6 +2,9 @@ import logging
 import requests
 import json
 from geopy import Nominatim
+from django.utils import timezone
+
+from datetime import datetime, timedelta
 from fcm_django.models import FCMDevice
 from pyfcm import FCMNotification
 from django.contrib.gis.measure import D
@@ -855,3 +858,123 @@ class TrendingOfferView(APIView, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class FavouriteProductView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # @swagger_auto_schema(tags=['customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'is_favourite': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #         'product_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #     }))
+    def get(self, request):
+        from product.models import Product
+        try:
+            customer_favourites = \
+                CustomerFavouriteProduct.objects.filter(customer=Customer.objects.get(user=request.user))
+            print(customer_favourites)
+            products = Product.objects.filter(id__in=list(customer_favourites.values_list('product_id', flat=True)),
+                                              is_hidden=False, is_deleted=False)
+            keyword = request.GET.get('keyword', '')
+            if keyword:
+                products = products.filter(name__icontains=request.GET.get('keyword', ''))
+            # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
+            product_serializer = CustomerProductSearchSerializer(products, many=True)
+            # product_serializer = CustomerProductSerializer(products, many=True)
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'products': product_serializer.data
+                                               },
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class BargainPriceView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # @swagger_auto_schema(tags=['customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'is_favourite': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #         'product_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #     }))
+    def get(self, request):
+        from product.models import Product
+        try:
+            product = Product.objects.get(id=request.GET.get('product_id', ''))
+            customer = Customer.objects.get(user=request.user)
+            bargain_amount = request.GET.get('bargain_amount', 0)
+            if customer.bargain_count < 4:
+                if product.is_bargain_possible:
+                    if product.lowest_selling_rate <= float(bargain_amount) <= product.highest_selling_rate:
+                            bargain_amount_viable = True
+                            data = {
+                                      'bargain_amount_viable': bargain_amount_viable,
+                                      'bargain_limit_reached': False
+                                  },
+                    else:
+                        bargain_amount_viable = False
+                        data = {
+                                  'bargain_amount_viable': bargain_amount_viable,
+                                  'bargain_limit_reached': False
+                              }
+                    customer.bargain_count += 1
+                    customer.save()
+                    return self.success_response(code='HTTP_200_OK',
+                                                 data=data,
+                                                 message=SUCCESS)
+                else:
+                    return self.success_response(code='HTTP_200_OK',
+                                                 data={'is_bargain_possible': False
+                                                       },
+                                                 message=SUCCESS)
+            else:
+                if customer.bargain_upto:
+                    if customer.bargain_upto < timezone.now() and customer.bargain_count == 4:
+                        customer.bargain_count = 1
+                        customer.save()
+                        if product.is_bargain_possible:
+                            if product.lowest_selling_rate <= float(bargain_amount) <= product.highest_selling_rate:
+                                bargain_amount_viable = True
+                                data = {
+                                           'bargain_amount_viable': bargain_amount_viable,
+                                           'bargain_limit_reached': False
+                                       },
+                            else:
+                                bargain_amount_viable = False
+                                data = {
+                                    'bargain_amount_viable': bargain_amount_viable,
+                                    'bargain_limit_reached': False
+                                }
+                            customer.bargain_count += 1
+                            customer.save()
+                            return self.success_response(code='HTTP_200_OK',
+                                                         data=data,
+                                                         message=SUCCESS)
+                        else:
+                            return self.success_response(code='HTTP_200_OK',
+                                                         data={'is_bargain_possible': False
+                                                               },
+                                                         message=SUCCESS)
+                    else:
+                        return self.success_response(code='HTTP_200_OK',
+                                                     data={'bargain_limit_reached': True
+                                                           },
+                                                     message=SUCCESS)
+                else:
+                    customer.bargain_upto = datetime.now() + timedelta(days=1)
+                    customer.save()
+                return self.success_response(code='HTTP_200_OK',
+                                             data={'bargain_limit_reached': True
+                                                   },
+                                             message=SUCCESS)
+
+
+        except Exception as e:
+            db_logger.exception(e)
+            # print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
