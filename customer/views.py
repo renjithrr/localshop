@@ -934,7 +934,7 @@ class BargainPriceView(APIView, ResponseViewMixin):
             else:
                 if customer.bargain_upto:
                     if customer.bargain_upto < timezone.now() and customer.bargain_count == 4:
-                        customer.bargain_count = 1
+                        customer.bargain_count = 0
                         customer.save()
                         if product.is_bargain_possible:
                             if product.lowest_selling_rate <= float(bargain_amount) <= product.highest_selling_rate:
