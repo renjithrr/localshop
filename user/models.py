@@ -31,14 +31,22 @@ DELIVERY_CHOICES = Konstants(
     Kw(pickup=1, label='Pick up'),
     Kw(self_delivery=2, label='Self delivery'),
     Kw(bulk_delivery=3, label='Bulk delivery'),
-    Kw(shop_ship=4, label='Shop ship'),
+    Kw(townie_ship=4, label='Townie ship'),
 )
 
 PAYMENT_CHOICES = Konstants(
     Kw(google_pay=1, label='Google pay'),
     Kw(paytm=2, label='Paytm'),
     Kw(credit_card=3, label='Credit card'),
-    Kw(debit_card=4, label='Debit card')
+    Kw(debit_card=4, label='Debit card'),
+    Kw(cod=5, label='COD')
+)
+
+
+CARD_CHOICES = Konstants(
+    Kw(small=1, label='Small'),
+    Kw(medium=2, label='Medium'),
+    Kw(big=3, label='Big')
 )
 
 
@@ -83,9 +91,21 @@ class ShopCategory(models.Model):
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True, null=True)
     fssai = models.BooleanField(default=False)
+    card_type = models.IntegerField(choices=CARD_CHOICES.choices(), blank=True, null=True)
+
 
     def __str__(self):
         return self.name
+
+
+class ServiceArea(AuditedModel, models.Model):
+    name = models.CharField(max_length=70, blank=True, null=True)
+    lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    location = models.PointField(default='POINT (0 0)',srid=4326)
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Shop(AuditedModel, models.Model):
@@ -117,9 +137,21 @@ class Shop(AuditedModel, models.Model):
     logo = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
     rating = models.FloatField(default=5)
     available = models.BooleanField(default=True)
+    vendor_id = models.CharField(max_length=30, blank=True, null=True)
+    service_area = models.ForeignKey(ServiceArea, related_name='service_area_shops', on_delete=models.CASCADE,
+                                      blank=True, null=True)
 
     def __str__(self):
         return self.shop_name
+
+
+class Coupon(AuditedModel, models.Model):
+    code = models.CharField(max_length=70, blank=True, null=True)
+    discount = models.IntegerField(blank=True, null=True)
+    is_percentage = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    shops = models.ManyToManyField(Shop, blank=True, null=True, related_name='shop_coupons')
+
 
 
 class DeliveryOption(AuditedModel, models.Model):
@@ -130,9 +162,9 @@ class DeliveryOption(AuditedModel, models.Model):
     free_delivery = models.BooleanField(default=False)
     free_delivery_for = models.FloatField(blank=True, null=True)
 
-
     def __str__(self):
         return self.shop.shop_name
+
 
 class DeliveryVehicle(AuditedModel, models.Model):
     delivery_option = models.ForeignKey(DeliveryOption, related_name='delivery_option_vehicle',

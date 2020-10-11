@@ -1,5 +1,5 @@
 from django.contrib import admin
-from customer.models import Customer, Address, Order, OrderItem
+from customer.models import Customer, Address, Order, OrderItem, CustomerFavouriteProduct
 
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -17,8 +17,13 @@ class OrderAdmin(admin.ModelAdmin):
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order_id', 'product_id', 'quantity', 'rate', 'total')
 
+class CustomerFavouriteProductAdmin(admin.ModelAdmin):
+    list_display = ('id', 'product', 'product')
+
 
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Address, AddressAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
+admin.site.register(CustomerFavouriteProduct, CustomerFavouriteProductAdmin)
+

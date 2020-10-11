@@ -1,5 +1,5 @@
 from django.contrib.gis.db import models
-from user.models import AuditedModel, AppUser, PAYMENT_CHOICES, Shop
+from user.models import AuditedModel, AppUser, PAYMENT_CHOICES, Shop, DELIVERY_CHOICES
 from utilities.utils import Kw, Konstants
 from product.models import Product
 
@@ -29,6 +29,8 @@ PAYMENT_STATUS = Konstants(
 
 class Customer(models.Model):
     user = models.OneToOneField(AppUser, related_name='customer', on_delete=models.CASCADE)
+    bargain_count = models.IntegerField(default=0)
+    bargain_upto = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.user.username
@@ -39,11 +41,12 @@ class Address(AuditedModel, models.Model):
                                  null=True)
     address = models.TextField(blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
-    lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    lat = models.DecimalField(max_digits=10, decimal_places=7, blank=True, null=True)
+    long = models.DecimalField(max_digits=10, decimal_places=7, blank=True, null=True)
     location = models.PointField(blank=True, null=True)
     locality = models.CharField(max_length=30, blank=True, null=True)
     address_type = models.IntegerField(choices=ADDRESS_TYPES.choices(), default=ADDRESS_TYPES.home)
+    is_deleted = models.BooleanField(default=False)
 
 
 class Order(AuditedModel, models.Model):
@@ -60,6 +63,12 @@ class Order(AuditedModel, models.Model):
     shop = models.ForeignKey(Shop, related_name='shop_orders', on_delete=models.CASCADE, blank=True, null=True)
     customer = models.ForeignKey(Customer, related_name='customer_orders', on_delete=models.CASCADE,
                                  blank=True, null=True)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    customer_otp = models.CharField(max_length=6, blank=True, null=True)
+    rating = models.FloatField(default=5)
+    payment_message = models.TextField(blank=True, null=True)
+    cod = models.BooleanField(default=True)
+    delivery_type = models.IntegerField(choices=DELIVERY_CHOICES.choices(), blank=True, null=True)
 
     def __str__(self):
         return str(self.id)

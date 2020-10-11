@@ -43,7 +43,7 @@ urlpatterns = [
     path('is-profile-completed/', ProfileCompleteView.as_view()),
     path('profile/', UserProfleView.as_view()),
     path('availability/', ShopAvailabilityView.as_view()),
-    # path('order-history/', ShopOrderHistoryView.as_view()),
+    path('process-order/', OrderProcessView.as_view()),
     # path('delivery-option/', DeliveryOptionView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]

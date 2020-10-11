@@ -1,5 +1,6 @@
 import logging
 import json
+import requests
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -36,7 +37,7 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
     def post(self, request):
         mobile_number = request.data.get('mobile_number')
         try:
-            if request.data.get('is_customer', ' '):
+            if request.data.get('is_customer', ''):
                 role = USER_TYPE_CHOICES.customer
                 user, created = AppUser.objects.get_or_create(
                     username=mobile_number,
@@ -176,9 +177,9 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 if request.FILES.get('gst_image', ''):
                     shop.gst_image = request.FILES['gst_image']
                 shop.save()
-                if request.data.get('email', ''):
-                    shop.user.email = request.data.get('email', '')
-                    shop.save()
+                if data['email']:
+                    shop.user.email = data['email']
+                    shop.user.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
@@ -284,7 +285,7 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
 
     def retrieve(self, request, pk=None):
         try:
-            delivery = DeliveryOption.objects.get(id=pk)
+            delivery = DeliveryOption.objects.get(shop_id=pk)
             serializer = DeliveryRetrieveSerializer(delivery)
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
@@ -323,7 +324,7 @@ class PaymentMethodView(GenericViewSet, ResponseViewMixin):
             return self.success_response(code='HTTP_200_OK',
                                          data=serializer.data,
                                          message=SUCCESS)
-        except Shop.DoesNotExist:
+        except UserPaymentMethod.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
     @swagger_auto_schema(tags=['user'], request_body=ShopDetailSerializer)
@@ -488,4 +489,51 @@ class ShopAvailabilityView(APIView, ResponseViewMixin):
 
         except Exception as e:
             db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class OrderProcessView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'available': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #     }))
+    def post(self, request):
+        order_id = request.data.get('order_id')
+        accept = request.data.get('is_accepted')
+        try:
+            order = Order.objects.get(id=order_id)
+            if accept:
+                order.status = ORDER_STATUS.accepted
+                vendor_otp = OTPgenerator()
+                customer_otp = OTPgenerator()
+                order.otp = vendor_otp
+                order.customer_otp = customer_otp
+                try:
+                    customer_address = order.customer.customer_addresses.last()
+                    print(customer_address.lat)
+                    data = {
+                        "order_id": "1",
+                        "lat": 1.2,
+                        "long": 1.2
+                    }
+                    response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                                             headers = {'content-type': 'application/json'})
+                    print(response.text)
+                except Exception as e:
+                    print(e)
+                    # logging.exception(e)
+                order.save()
+
+            else:
+                order.status = ORDER_STATUS.rejected
+
+            return self.success_response(code='HTTP_200_OK', message=SUCCESS,
+                                         data={})
+
+        except Exception as e:
+            # db_logger.exception(e)
+            print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

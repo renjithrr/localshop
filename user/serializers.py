@@ -83,7 +83,7 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
 
 class UserPaymentSerializer(serializers.ModelSerializer):
     payment_method = PaymentMethodSerializer()
-    delivery_type = serializers.SerializerMethodField()
+    # delivery_type = serializers.SerializerMethodField()
     class Meta:
         model = UserPaymentMethod
         fields = ['payment_method']
