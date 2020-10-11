@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from customer.models import Order,OrderItem
 from user.models import Shop, DeliveryOption, UserPaymentMethod
+from product.models import Product
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     delay = serializers.SerializerMethodField()
@@ -111,3 +112,9 @@ class ShopDetailsSerializer(serializers.ModelSerializer):
         except UserPaymentMethod.DoesNotExist:
             return ""
         return payments
+
+
+class ProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['name', 'category', 'size', 'color', 'quantity', 'description', 'brand', 'mrp', 'offer_prize', 'lowest_selling_rate', 'highest_selling_rate', 'hsn_code', 'tax_rate', 'moq', 'unit']
