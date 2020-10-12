@@ -40,6 +40,7 @@ urlpatterns = [
     # path('accepted-orders', AcceptedOrderView.as_view({'get': 'list'})),
     path('accept-reject', OrderAcceptRejectView.as_view()),
     path('upload-image', ProductImageUploadView.as_view()),
+    path('rate-product', RateProductView.as_view()),
     # path('order-pickup', OrderPickUpView.as_view()),
 ]
 urlpatterns += router.urls

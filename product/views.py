@@ -582,3 +582,28 @@ class  ProductPricingView(GenericViewSet, ResponseViewMixin):
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class  RateProductView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+    #
+    # @swagger_auto_schema(tags=['product'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'order_id': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'status': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #     }))
+    def post(self, request, *args, **kwargs):
+        try:
+            product = Product.objects.get(id=request.data.get('product_id'))
+            rating = request.data.get('rating')
+            product.rating = rating
+            product.save()
+            return self.success_response(code='HTTP_200_OK',
+                                         message=SUCCESS,
+                                         data={})
+        except Exception as e:
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
