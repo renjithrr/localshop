@@ -11,11 +11,20 @@ from django.contrib.postgres.fields import JSONField
 USER_TYPE_CHOICES = Konstants(
     Kw(vendor=1, label='Vendor'),
     Kw(customer=2, label='Customer'),
+    Kw(admin=3, label='Admin'),
 )
 
 SHOP_CATEGORY_CHOICES = Konstants(
     Kw(electronics=1, label='Vendor'),
     Kw(customer=2, label='Customer'),
+)
+
+SHOP_STATUS_CHOICES = Konstants(
+    Kw(approved=1, label='Approved'),
+    Kw(rejected=2, label='Rejected'),
+    Kw(deleted=3, label='Deleted'),
+    Kw(offline=4, label='Offline'),
+    Kw(pending=5, label='Pending'),
 )
 
 DELIVERY_CHOICES = Konstants(
@@ -117,6 +126,7 @@ class Shop(AuditedModel, models.Model):
     location = models.PointField(blank=True, null=True)
     opening = models.TimeField(blank=True, null=True)
     closing = models.TimeField(blank=True, null=True)
+    status = models.IntegerField(choices=SHOP_STATUS_CHOICES.choices(), blank=True, null=True)
     # delivery_type = MultiSelectField(choices=DELIVERY_CHOICES.choices())
     # self_delivery_charge = models.FloatField(blank=True, null=True)
     # delivery_radius = models.FloatField(blank=True, null=True)
