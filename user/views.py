@@ -1,6 +1,7 @@
 import logging
 import json
 import requests
+from django.contrib.gis.geos import Point
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -218,6 +219,12 @@ class LocationDataView(GenericViewSet, ResponseViewMixin):
                 serializer.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+            try:
+                location = Point(float(request.data['long']), float(request.data['lat']))
+                shop.location = location
+                shop.save()
+            except Exception as e:
+                db_logger.exception(e)
             return self.success_response(code='HTTP_200_OK',
                                          data={'user_id': shop.user.id},
                                          message=DATA_SAVED_SUCCESSFULLY)
