@@ -51,7 +51,8 @@ class ProductView(APIView, ResponseViewMixin):
             if serializer.is_valid():
                 product = serializer.save()
                 if request.data.get('image_ids', ''):
-                    existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''))
+                    existing_images = ProductImage.objects.exclude(id__in=request.data.get('image_ids', ''),
+                                                                   product=product)
                     if existing_images:
                         existing_images.delete()
                     for value in request.data.get('image_ids'):
