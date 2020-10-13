@@ -148,6 +148,28 @@ class CustomerAddressSerializer(serializers.ModelSerializer):
         return ADDRESS_TYPES.get_label(obj.address_type)
 
 
+class ProductListSerializer(serializers.ModelSerializer):
+    product_images = serializers.SerializerMethodField()
+    is_favourite = serializers.SerializerMethodField()
+    class Meta:
+        model = Product
+        fields = ['id','name', 'category', 'size', 'color', 'quantity', 'description', 'brand', 'product_id', 'mrp',
+                  'offer_prize', 'hsn_code', 'moq', 'tax_rate', 'unit', 'lowest_selling_rate', 'highest_selling_rate',
+                  'is_best_Seller', 'is_bargain_possible', 'offer_percentage', 'product_images', 'is_favourite']
+
+    def get_product_images(self, obj):
+        return [{'id': image.id, 'image_url': image.image.url}
+         for image in ProductImage.objects.filter(product=obj)]
+
+    def get_is_favourite(self, obj):
+        # print(self.context)
+        if self.context:
+            # print(self.context.get('user'), "aaaaaaaa")
+            return True if CustomerFavouriteProduct.objects.filter(product=obj,
+                                                       customer=Customer.objects.get(user=self.context))\
+                else obj.is_favourite
+        return False
+
 class CustomerProductSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField('get_products')
 
@@ -165,20 +187,22 @@ class CustomerProductSerializer(serializers.ModelSerializer):
         shop = self.context.get('shop')
         products = Product.objects.filter(shop=shop, category=obj)
         search = self.context.get('search')
+        # print(self.context.get('user'), "Dddddddd")
         if search:
             products = products.filter(name__icontains=search)
-        return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
-                 'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
-                 'moq': product.moq, 'offer_prize': product.offer_prize,
-                 'highest_selling_rate': product.highest_selling_rate, 'rating': product.rating,
-                 'shop': product.shop.id, 'hsn_code': product.hsn_code,
-                 'description': product.description,
-                 'is_favourite': True if self.context.get('user') and CustomerFavouriteProduct.objects.
-                     filter(product=product, customer=Customer.objects.get(user=self.context.get('user'))) else product.is_favourite,
-                 'id': product.id, 'color': product.color, 'is_best_Seller': product.is_best_Seller,
-                 'is_bargain_possible': product.is_bargain_possible, 'offer_percentage': product.offer_percentage,
-                 'product_images': [{'id': image.id, 'image_url': image.image.url}
-                  for image in ProductImage.objects.filter(product=product)]} for product in products]
+        return ProductListSerializer(products, context=self.context.get('user'), many=True).data
+        # return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
+        #          'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
+        #          'moq': product.moq, 'offer_prize': product.offer_prize,
+        #          'highest_selling_rate': product.highest_selling_rate, 'rating': product.rating,
+        #          'shop': product.shop.id, 'hsn_code': product.hsn_code,
+        #          'description': product.description,
+        #          'is_favourite': True if self.context.get('user') and CustomerFavouriteProduct.objects.
+        #              filter(product=product, customer=Customer.objects.get(user=self.context.get('user'))) else product.is_favourite,
+        #          'id': product.id, 'color': product.color, 'is_best_Seller': product.is_best_Seller,
+        #          'is_bargain_possible': product.is_bargain_possible, 'offer_percentage': product.offer_percentage,
+        #          'product_images': [{'id': image.id, 'image_url': image.image.url}
+        #           for image in ProductImage.objects.filter(product=product)]} for product in products]
 
     # def get_product_images(self, obj):
     #     return [{'id': image.id, 'image_url': image.image.url} for image in ProductImage.objects.filter(product=obj)]
@@ -266,6 +290,7 @@ class CustomerShopSerializer(serializers.ModelSerializer):
         return pick_up
 
     def get_products(self, obj):
+        # print(self.context)
         categories = Category.objects.filter(product__isnull=False, product__shop=obj)
         product_serializer = CustomerProductSerializer(categories, context={'shop': obj, 'user': self.context['user']},
                                                        many=True)

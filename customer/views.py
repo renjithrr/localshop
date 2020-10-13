@@ -355,8 +355,10 @@ class ShopView(APIView, ResponseViewMixin):
     def get(self, request):
         try:
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
-            print(request.user)
-            serializer = CustomerShopSerializer(shop, context={'user': request.user})
+            if request.user.is_anonymous:
+                serializer = CustomerShopSerializer(shop, context={'user': None})
+            else:
+                serializer = CustomerShopSerializer(shop, context={'user': request.user})
             return self.success_response(code='HTTP_200_OK',
                                          data={'shop_details': serializer.data,
                                                },
@@ -642,7 +644,7 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                     if product.lowest_selling_rate < value.get('bargain_amount') < product.highest_selling_rate:
                         total_amount += value.get('bargain_amount') * value['quantity']
                 else:
-                    print(product.mrp, product.lowest_selling_rate, product.highest_selling_rate)
+                    # print(product.mrp, product.lowest_selling_rate, product.highest_selling_rate)
                     total_amount += product.mrp * value['quantity']
             # otp = OTPgenerator()
             order = Order.objects.create(grand_total=total_amount, payment_status=PAYMENT_STATUS.pending,
@@ -875,7 +877,7 @@ class FavouriteProductView(APIView, ResponseViewMixin):
         try:
             customer_favourites = \
                 CustomerFavouriteProduct.objects.filter(customer=Customer.objects.get(user=request.user))
-            print(customer_favourites)
+            # print(customer_favourites)
             products = Product.objects.filter(id__in=list(customer_favourites.values_list('product_id', flat=True)),
                                               is_hidden=False, is_deleted=False)
             keyword = request.GET.get('keyword', '')
