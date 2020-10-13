@@ -355,7 +355,8 @@ class ShopView(APIView, ResponseViewMixin):
     def get(self, request):
         try:
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
-            serializer = CustomerShopSerializer(shop)
+            print(request.user)
+            serializer = CustomerShopSerializer(shop, context={'user': request.user})
             return self.success_response(code='HTTP_200_OK',
                                          data={'shop_details': serializer.data,
                                                },

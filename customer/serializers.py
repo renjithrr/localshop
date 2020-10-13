@@ -5,7 +5,8 @@ from django.db.models import Sum
 from user.models import Shop, DeliveryOption, DELIVERY_CHOICES, ServiceArea
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient,  Category
 from product.serializers import ProductListingSerializer
-from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES
+from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES,\
+    CustomerFavouriteProduct
 
 
 #
@@ -171,7 +172,9 @@ class CustomerProductSerializer(serializers.ModelSerializer):
                  'moq': product.moq, 'offer_prize': product.offer_prize,
                  'highest_selling_rate': product.highest_selling_rate, 'rating': product.rating,
                  'shop': product.shop.id, 'hsn_code': product.hsn_code,
-                 'description': product.description, 'is_favourite': product.is_favourite,
+                 'description': product.description,
+                 'is_favourite': True if self.context.get('user') and CustomerFavouriteProduct.objects.
+                     filter(product=product, customer=Customer.objects.get(user=self.context.get('user'))) else product.is_favourite,
                  'id': product.id, 'color': product.color, 'is_best_Seller': product.is_best_Seller,
                  'is_bargain_possible': product.is_bargain_possible, 'offer_percentage': product.offer_percentage,
                  'product_images': [{'id': image.id, 'image_url': image.image.url}
@@ -264,7 +267,7 @@ class CustomerShopSerializer(serializers.ModelSerializer):
 
     def get_products(self, obj):
         categories = Category.objects.filter(product__isnull=False, product__shop=obj)
-        product_serializer = CustomerProductSerializer(categories, context={'shop': obj},
+        product_serializer = CustomerProductSerializer(categories, context={'shop': obj, 'user': self.context['user']},
                                                        many=True)
         return product_serializer.data
 
