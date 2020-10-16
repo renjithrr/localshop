@@ -30,6 +30,7 @@ class NearbyShopSerializer(serializers.ModelSerializer):
             , 'category', 'pick_up', 'home_delivery']
 
     def get_distance(self, obj):
+        print("ssf")
         location = self.context.get("location")
         if location:
             return round(obj.location.distance(location) * 100, 2)
@@ -316,7 +317,8 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['shop', 'products', 'grand_total', 'created_at', 'rating', 'otp', 'id', 'status', 'status_label']
+        fields = ['shop', 'products', 'grand_total', 'created_at', 'rating', 'customer_otp', 'id', 'status',
+                  'status_label']
 
     @staticmethod
     def get_shop(obj):
@@ -330,6 +332,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
     @staticmethod
     def get_products(obj):
         products = obj.order_items.all()
+        print(products)
         return [{'name': product.product_id.name, 'brand': product.product_id.brand,
                                     'size': product.product_id.size,
                  'quantity': product.quantity, 'mrp': product.product_id.mrp,

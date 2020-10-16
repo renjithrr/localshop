@@ -643,6 +643,8 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 if value.get('bargain_amount'):
                     if product.lowest_selling_rate < value.get('bargain_amount') < product.highest_selling_rate:
                         total_amount += value.get('bargain_amount') * value['quantity']
+                elif product.offer_prize:
+                    total_amount += product.offer_prize * value['quantity']
                 else:
                     # print(product.mrp, product.lowest_selling_rate, product.highest_selling_rate)
                     total_amount += product.mrp * value['quantity']
