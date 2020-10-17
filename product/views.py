@@ -491,7 +491,8 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
     def list(self, request, *args, **kwargs):
         try:
 
-            accepted_orders = Order.objects.filter(Q(status=ORDER_STATUS.accepted) | Q(status=ORDER_STATUS.ready_for_pickup))
+            accepted_orders = Order.objects.filter(Q(status=ORDER_STATUS.accepted) | Q(status=ORDER_STATUS.ready_for_pickup),
+                                                   shop__user=request.user)
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
