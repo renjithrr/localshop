@@ -12,11 +12,11 @@ from drf_yasg import openapi
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_NOT_REGISTERED
-from utilities.utils import OTPgenerator, deliver_sms, render_to_pdf, delivery_system_call, id_generator
+from utilities.utils import OTPgenerator, id_generator
 from utilities.pagination import CustomOffsetPagination
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod, DeliveryOption
-
+from user.tasks import deliver_sms, render_to_pdf, delivery_system_call
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
     DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
 from customer.serializers import OrderHistorySerializer
