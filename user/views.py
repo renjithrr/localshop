@@ -452,7 +452,7 @@ class UserProfleView(APIView, ResponseViewMixin):
 
 
 class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = OrderHistorySerializer
     pagination_class = CustomOffsetPagination
 
@@ -464,7 +464,7 @@ class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            delivered_orders = Order.objects.filter(status=ORDER_STATUS.delivered)
+            delivered_orders = Order.objects.filter(status=ORDER_STATUS.delivered, shop__user=request.user)
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
