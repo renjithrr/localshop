@@ -1,0 +1,192 @@
+DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Townie Invoice</title>
+
+    <style>
+p, span {
+  font-family: arial, sans-serif;
+}
+    table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.detailtable td,.detailtable th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+.right{
+	text-align: right;	
+}
+.invoice-box{
+margin: 76px;
+}
+.topspace{
+margin-top: 25px;
+padding-top:55px;
+}
+.btmspace{margin-bottom:15px;}
+.detailtable tr:nth-child(even) {
+  ##background-color: #f2f2f2;
+}
+
+    @media only screen and (max-width: 600px) {
+        .invoice-box table tr.top table td {
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+
+        .invoice-box table tr.information table td {
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+    }
+
+    </style>
+</head>
+
+<body>
+    <div class="invoice-box">
+
+
+
+<table class="btmspace">
+  <tr>
+    <th></th>
+    <th></th>
+   </tr>
+  <tr>
+    <td><img src="https://www.sparksuite.com/images/logo.png" style="width:100%; max-width:300px;"></td>
+    <td class="right">Tax Invoice/Bill of Supply/Cash </td>
+  </tr>
+  <tr><td></td><td></td></tr>
+  <tr>
+    <td>Memo</td>
+    <td></td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+    <th></th>
+   </tr>
+
+  <tr class ="topspace">
+    <td style="font-weight: bold;">Sold By:</td>
+    <td></td>
+    <td></td>
+    <td class="right" style="font-weight: bold;">Billing Address:</td>
+  </tr>
+  <tr>
+    <td>vender address</td>
+    <td></td>
+    <td></td>
+    <td class="right">{{billing_address}} </td>
+  </tr>
+  </table>
+<table class ="topspace" style="max-width:300px;">
+    <tr >
+    <td style="font-weight: bold; max-width:10px;">PAN No:</td>
+    <td>{{pan_no}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">GST No:</td>
+    <td>{{gst_no}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  </table>
+<table>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td class="right" style="font-weight: bold;">Shipping Address:</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td class="right" style="max-width:500px;">{{shipping_address}}</td>
+  </tr>
+  
+   </table>
+<table class ="topspace" style="max-width:500px;"> 
+
+  <tr >
+    <td style="font-weight: bold;">Order No:</td>
+    <td>{{order_no}}</td>
+    <td style="font-weight: bold;">Invoice No:</td>
+    <td>{{invoice_id}}</td>
+  </tr>
+  <tr>
+    <td style="font-weight: bold;">Order Date:</td>
+    <td>{{order_date}}</td>
+    <td style="font-weight: bold;">Invoice Date:</td>
+    <td>{{invoice_date}}</td>
+  </tr>
+  
+</table>
+
+
+ <table class="detailtable topspace">
+  <tr>
+    <th>Sl No</th>
+    <th>Particulars</th>
+    <th>Unit Price</th>
+    <th>Qty</th>
+    <th>Net Amount</th>
+    <th>CGST</th>
+    <th>SGST</th>
+    <th>IGST</th>
+    <th>KFC</th>
+    <th>Total</th>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td style="font-weight: bold;"></td>
+  </tr>
+  
+</table>
+ <table class="topspace">
+ <tr></tr>
+ </table>
+<span> Amount in Words: </span> <span id="aw" style = "text-transform:capitalize; font-weight: bold">{{amount_words}}  </span>
+
+<p style="width:100%">
+<img src="https://www.sparksuite.com/images/logo.png" align="right" style="width:100%; max-width:300px;">
+</div>
+<p align="right" style ="font-weight: bold; margin-right:76px">Authorized Signatory</p>
+    </div>
+</body>
+</html>

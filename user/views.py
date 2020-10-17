@@ -12,7 +12,7 @@ from drf_yasg import openapi
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import AUTHENTICATION_SUCCESSFUL, SUCCESS
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_OTP, OTP_SENT, USER_NOT_REGISTERED
-from utilities.utils import OTPgenerator, deliver_sms
+from utilities.utils import OTPgenerator, deliver_sms, render_to_pdf, delivery_system_call, id_generator
 from utilities.pagination import CustomOffsetPagination
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod, DeliveryOption
@@ -57,7 +57,9 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
                 )
             if user:
                 otp = OTPgenerator()
-                deliver_sms(mobile_number, otp)
+                deliver_sms.apply_async(queue='normal', args=(mobile_number, otp),
+                                                  kwargs={})
+                # deliver_sms(mobile_number, otp)
                 user.verification_otp = otp
                 user.save()
             return self.success_response(code='HTTP_200_OK', message=OTP_SENT,
@@ -181,6 +183,10 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 if data['email']:
                     shop.user.email = data['email']
                     shop.user.save()
+                if not shop.vendor_id:
+                    vendor_id = id_generator()
+                    shop.vendor_id = vendor_id
+                    shop.save()
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',
@@ -522,15 +528,52 @@ class OrderProcessView(APIView, ResponseViewMixin):
                     customer_address = order.customer.customer_addresses.last()
                     print(customer_address.lat)
                     data = {
-                        "order_id": "1",
-                        "lat": 1.2,
-                        "long": 1.2
+                        "order_id": str(order.id),
+                        "lat": customer_address.lat,
+                        "long": customer_address.long
                     }
-                    response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
-                                             headers = {'content-type': 'application/json'})
-                    print(response.text)
+                    delivery_system_call.apply_async(queue='normal', args=(),
+                                            kwargs=data)
+                    # delivery_system_call(data)
+                    # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                    #                          headers = {'content-type': 'application/json'})
+                    # print(response.text)
                 except Exception as e:
                     print(e)
+                try:
+                    from django.http import HttpResponse
+                    from django.template import RequestContext, loader
+                    # template = loader.get_template('townie_Invoice.html')
+                    context = {
+                        "invoice_id": 123,
+                        "billing_address": "John Cooper",
+                        "shipping_address": 1399.99,
+                        "order_no": order.id,
+                        "order_date": order.created_at,
+                        "invoice_date": order.created_at,
+                        "amount_words": "test",
+                        "pan_no": "test",
+                        "gst_no": "123"
+
+                    }
+                    email= ''
+                    # html = template.render(context)
+                    # render_to_pdf.apply_async(queue='normal', args=(html, email, context),
+                    #                         kwargs={})
+                    pdf = render_to_pdf('townie_Invoice.html', context)
+                    # if pdf:
+                    #     response = HttpResponse(pdf, content_type='application/pdf')
+                    #     filename = "Invoice_%s.pdf" % ("12341231")
+                    #     content = "inline; filename='%s'" % (filename)
+                    #     download = request.GET.get("download")
+                    #     if download:
+                    #         content = "attachment; filename='%s'" % (filename)
+                    #     response['Content-Disposition'] = content
+                    #     return response
+                    # return HttpResponse("Not found")
+                except Exception as e:
+                    print(e)
+
                     # logging.exception(e)
                 order.save()
 
