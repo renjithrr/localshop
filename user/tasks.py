@@ -131,10 +131,9 @@ def manage_product_quantity(order_id):
     items = OrderItem.objects.filter(order_id=order_id)
     for value in items:
         try:
-            product = Product.objects.get(id=value.product_id)
+            product = Product.objects.get(id=value.product_id.id)
             product.quantity = product.quantity - value.quantity
             product.save()
         except Exception as e:
             db_logger.exception(e)
-
 
