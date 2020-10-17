@@ -22,7 +22,7 @@ from product.serializers import ProductSerializer, ProductPricingSerializer, Pro
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
     ORDER_STATUS, PAYMENT_STATUS, ProductImage, ProductVarientImage
-from customer.models import Order, OrderItem
+from customer.models import Order, OrderItem, Customer
 from user.models import Shop
 from user.serializers import ProfileSerializer
 
@@ -456,7 +456,8 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending)
+            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending,
+                                                  customer=Customer.objects.get(user=request.user))
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)

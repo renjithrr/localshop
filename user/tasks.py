@@ -106,7 +106,7 @@ def deliver_email(email_id):
 
 @shared_task()
 def delivery_system_call(**data):
-    response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+    response = requests.post('https://townie.in/delivery/v1/assignorder', data=json.dumps(data),
                              headers={'content-type': 'application/json'})
 
 
