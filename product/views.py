@@ -408,15 +408,15 @@ class SalesView(APIView, ResponseViewMixin):
                 shop = Shop.objects.filter(user=request.GET.get('user_id')).last()
                 serializer = ProfileSerializer(shop)
                 profile_info = serializer.data
-                todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed, shop__user=request.user,
                                                    created_at__date=date.today()).aggregate(Sum('grand_total'))
                 yesterday = date.today() - timedelta(days=1)
                 last_7_days = date.today() - timedelta(days=7)
-                last_7_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                last_7_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed, shop__user=request.user,
                                                    created_at__date__range=(last_7_days, yesterday)).aggregate(
                     Sum('grand_total'))
                 last_31_days = date.today() - timedelta(days=31)
-                last_31_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed,
+                last_31_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed, shop__user=request.user,
                                                     created_at__date__range=(last_31_days, yesterday)).aggregate(
                     Sum('grand_total'))
                 # pending_orders = OrderItem.objects.filter(order_id__status=ORDER_STATUS.pending)
