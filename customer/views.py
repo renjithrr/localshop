@@ -22,10 +22,10 @@ from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, 
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator, payment_calculation
-from user.models import ShopCategory, PaymentMethod, USER_TYPE_CHOICES, AppUser, AppConfigData, ServiceArea, Coupon,\
+from user.models import ShopCategory, AppUser, AppConfigData, ServiceArea, Coupon,\
     DELIVERY_CHOICES
 from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS,\
-    PAYMENT_CHOICES
+    PAYMENT_CHOICES, OrderItem
 from product.models import Product, Category, ProductVarient
 
 db_logger = logging.getLogger('db')
@@ -626,9 +626,13 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             shop_id = request.data.get('shop_id', '')
             total_amount = 0
             delivery_charge = 0
+            total = 0
+            rate = 0
             shop = Shop.objects.get(id=shop_id)
             products = request.data.get('products')
-
+            order = Order.objects.create(payment_status=PAYMENT_STATUS.pending,
+                                         status=ORDER_STATUS.pending, shop=shop,
+                                         customer=Customer.objects.get(user=request.user))
             for value in products:
                 try:
                     product = Product.objects.get(id=value['id'])
@@ -642,16 +646,23 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                                                  message=SUCCESS)
                 if value.get('bargain_amount'):
                     if product.lowest_selling_rate < value.get('bargain_amount') < product.highest_selling_rate:
-                        total_amount += value.get('bargain_amount') * value['quantity']
+                        total = value.get('bargain_amount') * value['quantity']
+                        rate = value.get('bargain_amount')
+                        total_amount += total
                 elif product.offer_prize:
-                    total_amount += product.offer_prize * value['quantity']
+                    total = product.offer_prize * value['quantity']
+                    rate = product.offer_prize
+                    total_amount += total
                 else:
                     # print(product.mrp, product.lowest_selling_rate, product.highest_selling_rate)
-                    total_amount += product.mrp * value['quantity']
+                    total = product.mrp * value['quantity']
+                    rate = product.mrp
+                    total_amount += total
+                OrderItem.objects.create(product_id=product, quantity=value['quantity'], rate=rate,
+                                         total=total, order_id=order)
             # otp = OTPgenerator()
-            order = Order.objects.create(grand_total=total_amount, payment_status=PAYMENT_STATUS.pending,
-                                         status=ORDER_STATUS.pending, shop=shop,
-                                         customer=Customer.objects.get(user=request.user))
+            order.grand_total = total_amount
+            order.save()
             headers = {
                 'Content-Type': 'application/json',
                 'x-client-id': '25883f6357f2b14a1885899db38852',
@@ -696,7 +707,8 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 device = FCMDevice.objects.get(user=request.user, active=True).registration_id
                 message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
                 push_service = FCMNotification(api_key=settings.FCM_KEY)
-                push_service.notify_single_device(registration_id=device, data_message=message)
+                response = push_service.notify_single_device(registration_id=device, data_message=message)
+                db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response), request.user))
             except Exception as e:
                 logging.exception(e)
             return self.success_response(code='HTTP_200_OK',

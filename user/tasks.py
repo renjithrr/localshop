@@ -8,6 +8,7 @@ import json
 from botocore.exceptions import ClientError
 from celery import shared_task
 from io import BytesIO
+from customer.models import OrderItem
 
 from xhtml2pdf import pisa
 from django.template.loader import get_template
@@ -122,3 +123,18 @@ def render_to_pdf(template_src, email, context_dict={}):
         deliver_email(email)
         # return HttpResponse(result.getvalue(), content_type='application/pdf')
     return None
+
+
+@shared_task()
+def manage_product_quantity(order_id):
+    from product.models import Product
+    items = OrderItem.objects.filter(order_id=order_id)
+    for value in items:
+        try:
+            product = Product.objects.get(id=value.product_id)
+            product.quantity = product.quantity - value.quantity
+            product.save()
+        except Exception as e:
+            db_logger.exception(e)
+
+
