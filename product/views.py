@@ -456,8 +456,7 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending,
-                                                  customer=Customer.objects.get(user=request.user))
+            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending, shop__user=request.user)
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
