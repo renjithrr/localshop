@@ -533,7 +533,8 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
             order.status = status
             order.save()
             return self.success_response(code='HTTP_200_OK',
-                                         message=SUCCESS)
+                                         message=SUCCESS,
+                                         data={'otp': order.otp})
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
