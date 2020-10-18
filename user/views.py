@@ -583,7 +583,7 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 order.status = ORDER_STATUS.rejected
 
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
-                                         data={})
+                                         data={'otp': order.otp})
 
         except Exception as e:
             # db_logger.exception(e)
