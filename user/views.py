@@ -525,8 +525,7 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 order.otp = vendor_otp
                 order.customer_otp = customer_otp
                 try:
-                    manage_product_quantity.apply_async(queue='normal', args=(order.id),
-                                                     kwargs={})
+                    manage_product_quantity.apply_async(queue='normal', args=(order.id,))
                     customer_address = order.customer.customer_addresses.last()
                     print(customer_address.lat)
                     data = {
