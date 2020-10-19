@@ -92,7 +92,7 @@ class OrderHistoryView(APIView, ResponseViewMixin):
         try:
 
             customer = Customer.objects.get(user=request.user)
-            orders = customer.customer_orders.all()
+            orders = customer.customer_orders.all().order_by('-id')
             serializer = CustomerOrderHistorySerializer(orders, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'orders': serializer.data,
@@ -593,7 +593,7 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                 if DELIVERY_CHOICES.self_delivery in delivery_type:
                     delivery_charge = delivery_details.delivery_charge
                 elif DELIVERY_CHOICES.townie_ship in delivery_type:
-                    if float(total_amount) >= delivery_details.free_delivery_for:
+                    if delivery_details.free_delivery_for and float(total_amount) >= delivery_details.free_delivery_for:
                         delivery_charge = 0
                     else:
                         delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
