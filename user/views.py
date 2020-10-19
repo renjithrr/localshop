@@ -520,9 +520,9 @@ class OrderProcessView(APIView, ResponseViewMixin):
             order = Order.objects.get(id=order_id)
             if accept:
                 order.status = ORDER_STATUS.accepted
-                vendor_otp = OTPgenerator()
+                # vendor_otp = OTPgenerator()
                 customer_otp = OTPgenerator()
-                order.otp = vendor_otp
+                # order.otp = vendor_otp
                 order.customer_otp = customer_otp
                 try:
                     manage_product_quantity.apply_async(queue='normal', args=(order.id,))

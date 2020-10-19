@@ -17,7 +17,7 @@ from drf_yasg.utils import swagger_auto_schema
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
 from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS, PRODUCT_CODE_EXISTS
-from utilities.utils import BulkCreateManager, export_to_csv, id_generator
+from utilities.utils import BulkCreateManager, export_to_csv, id_generator, OTPgenerator
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
@@ -527,9 +527,11 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
         }))
     def post(self, request, *args, **kwargs):
         try:
-            print(request.data)
             order = Order.objects.get(id=request.data.get('order_id'))
             status = request.data.get('status')
+            if status == ORDER_STATUS.accepted:
+                vendor_otp = OTPgenerator()
+                order.otp = vendor_otp
             order.status = status
             order.save()
             return self.success_response(code='HTTP_200_OK',
