@@ -108,6 +108,7 @@ def deliver_email(email_id):
 def delivery_system_call(**data):
     response = requests.post('https://townie.in/delivery/v1/assignorder', data=json.dumps(data),
                              headers={'content-type': 'application/json'})
+    db_logger.debug('Delivery boy response : {0} => {1}'.format(response.content, str(data)))
 
 
 # def render_to_pdf(template_src, context_dict):
@@ -132,8 +133,10 @@ def manage_product_quantity(order_id):
     for value in items:
         try:
             product = Product.objects.get(id=value.product_id.id)
+            db_logger.debug('before quantity + product id : {0} => {1}'.format(product.quantity, product.id))
             product.quantity = product.quantity - value.quantity
             product.save()
+            db_logger.debug('after quantity: {0}'.format(product.quantity))
         except Exception as e:
             db_logger.exception(e)
 
