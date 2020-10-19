@@ -323,7 +323,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
     @staticmethod
     def get_shop(obj):
         return [{'id': obj.shop.id, 'name': obj.shop.shop_name, 'lat': obj.shop.lat, 'long': obj.shop.long,
-                 'rating': obj.shop.rating, 'address': obj.shop.address }]
+                 'rating': obj.shop.rating, 'address': obj.shop.address, 'shop_available': obj.shop.available}]
 
     @staticmethod
     def get_status_label(obj):
