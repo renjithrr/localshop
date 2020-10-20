@@ -133,10 +133,10 @@ def manage_product_quantity(order_id):
     for value in items:
         try:
             product = Product.objects.get(id=value.product_id.id)
-            db_logger.debug('before quantity + product id : {0} => {1}'.format(product.quantity, product.id))
+            # db_logger.debug('before quantity + product id : {0} => {1}'.format(product.quantity, product.id))
             product.quantity = product.quantity - value.quantity
             product.save()
-            db_logger.debug('after quantity: {0}'.format(product.quantity))
+            # db_logger.debug('after quantity: {0}'.format(product.quantity))
         except Exception as e:
             db_logger.exception(e)
 
