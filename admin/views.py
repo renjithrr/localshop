@@ -129,7 +129,7 @@ class AdminSignup(APIView, ResponseViewMixin):
         try:
             role = USER_TYPE_CHOICES.admin
             try:
-                user = AppUser.objects.get(mobile_number=mobile_number)
+                user = AppUser.objects.get(mobile_number=mobile_number, role=USER_TYPE_CHOICES.admin)
 
             except AppUser.DoesNotExist:
                 username = id_generator()
