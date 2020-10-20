@@ -86,10 +86,11 @@ class VerifyMobileOtpView(APIView, ResponseViewMixin):
         mobile_number = request.data.get('mobile_number')
         otp = request.data.get('otp')
         try:
-            try:
-                user = AppUser.objects.get(mobile_number=mobile_number, role=USER_TYPE_CHOICES.vendor)
-            except AppUser.DoesNotExist:
+            if request.data.get('is_customer', ''):
                 user = AppUser.objects.get(mobile_number=mobile_number, role=USER_TYPE_CHOICES.customer)
+            else:
+                user = AppUser.objects.get(mobile_number=mobile_number, role=USER_TYPE_CHOICES.vendor)
+                
             if user.verification_otp == otp or  otp == '123456':
                 token, _ = Token.objects.get_or_create(user=user)
                 user.is_active = True
