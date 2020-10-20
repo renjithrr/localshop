@@ -92,10 +92,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField('get_items')
+    address = serializers.SerializerMethodField()
+    mobile_number = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'items', 'status', 'otp']
+        fields = ['id', 'items', 'status', 'otp', 'delivery_type', 'address', 'mobile_number']
 
     def get_items(self, obj):
         return [{'name': item.product_id.name, 'category': item.product_id.category.name, 'size': item.product_id.size,
@@ -103,6 +105,13 @@ class OrderDetailSerializer(serializers.ModelSerializer):
                  'description': item.product_id.description, 'brand': item.product_id.brand,
                  'product_id': item.product_id.product_id}
                 for item in OrderItem.objects.filter(order_id=obj)]
+
+    def get_address(self, obj):
+        address = obj.customer.customer_addresses.filter(is_deleted=False).last()
+        return [{'address': address.address, 'lat': address.lat, 'long': address.long}] if address else []
+
+    def get_mobile_number(self, obj):
+        return obj.customer.user.mobile_number
 
 
 class ProductImageSerializer(serializers.Serializer) :
