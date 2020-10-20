@@ -588,3 +588,28 @@ class OrderProcessView(APIView, ResponseViewMixin):
             # db_logger.exception(e)
             print(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class ConfirmDeliveryView(APIView, ResponseViewMixin):
+    permission_classes = [IsAuthenticated]
+
+    # @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'available': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+    #     }))
+    def post(self, request):
+        order_id = request.data.get('order_id')
+        otp = request.data.get('otp')
+        try:
+            order = Order.objects.get(id=order_id)
+            if order.customer_otp == otp:
+                order.status = ORDER_STATUS.delivered
+                order.save()
+            return self.success_response(code='HTTP_200_OK', message=SUCCESS,
+                                         data={})
+
+        except Exception as e:
+            # db_logger.exception(e)
+            print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)

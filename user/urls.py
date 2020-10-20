@@ -44,6 +44,7 @@ urlpatterns = [
     path('profile/', UserProfleView.as_view()),
     path('availability/', ShopAvailabilityView.as_view()),
     path('process-order/', OrderProcessView.as_view()),
+    path('confirm-delivery/', ConfirmDeliveryView.as_view()),
     # path('delivery-option/', DeliveryOptionView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]
