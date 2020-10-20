@@ -40,20 +40,22 @@ class VerifyMobileNumberView(APIView, ResponseViewMixin):
         try:
             if request.data.get('is_customer', ''):
                 role = USER_TYPE_CHOICES.customer
+                customer_id = id_generator()
                 user, created = AppUser.objects.get_or_create(
-                    username=mobile_number,
+                    role=role,
                     mobile_number=mobile_number,
-                    defaults={'role': role, 'is_active': False},
+                    defaults={'username': customer_id, 'is_active': False},
                 )
                 if created or not user.is_active:
                     return self.error_response(code='HTTP_400_BAD_REQUEST', message=USER_NOT_REGISTERED)
 
             else:
                 role = USER_TYPE_CHOICES.vendor
+                vendor_id = id_generator()
                 user, created = AppUser.objects.get_or_create(
-                    username=mobile_number,
+                    role=role,
                     mobile_number=mobile_number,
-                    defaults={'role': role, 'is_active': False},
+                    defaults={'username': vendor_id, 'is_active': False},
                 )
             if user:
                 otp = OTPgenerator()

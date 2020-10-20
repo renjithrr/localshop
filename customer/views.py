@@ -23,7 +23,7 @@ from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
 from utilities.utils import deliver_sms, OTPgenerator, payment_calculation
 from user.models import ShopCategory, AppUser, AppConfigData, ServiceArea, Coupon,\
-    DELIVERY_CHOICES
+    DELIVERY_CHOICES, USER_TYPE_CHOICES
 from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS,\
     PAYMENT_CHOICES, OrderItem
 from product.models import Product, Category, ProductVarient
@@ -224,12 +224,14 @@ class CustomerSignup(APIView, ResponseViewMixin):
         mobile_number = request.data.get('mobile_number')
         try:
             user= AppUser.objects.get(
-                username=mobile_number,
                 mobile_number=mobile_number,
+                role=USER_TYPE_CHOICES.customer
             )
             Customer.objects.get_or_create(user=user)
             otp = OTPgenerator()
-            deliver_sms(mobile_number, otp)
+            # deliver_sms(mobile_number, otp)
+            deliver_sms.apply_async(queue='normal', args=(mobile_number, otp),
+                                    kwargs={})
             user.verification_otp = otp
             user.email = request.data.get('email')
             user.first_name = request.data.get('name')
@@ -259,7 +261,9 @@ class AccountEditView(APIView, ResponseViewMixin):
             user = AppUser.objects.get(id=request.user.id)
             if user.mobile_number != mobile_number:
                 otp = OTPgenerator()
-                deliver_sms(mobile_number, otp)
+                # deliver_sms(mobile_number, otp)
+                deliver_sms.apply_async(queue='normal', args=(mobile_number, otp),
+                                        kwargs={})
                 user.verification_otp = otp
                 user.mobile_number = mobile_number
             user.email = request.data.get('email')

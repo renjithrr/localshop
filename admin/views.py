@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR
+from utilities.utils import id_generator
 from customer.models import Order, Shop
 from user.models import Shop
 from admin.serializers import AdminOrderSerializer, OrderDetailsSerializer, AdminShopSerializer, ShopDetailsSerializer, ProductsSerializer
@@ -128,10 +129,12 @@ class AdminSignup(APIView, ResponseViewMixin):
         try:
             role = USER_TYPE_CHOICES.admin
             try:
-                user = AppUser.objects.get(username=mobile_number)
+                user = AppUser.objects.get(mobile_number=mobile_number)
 
             except AppUser.DoesNotExist:
-                user = AppUser(email=request.data.get('email'), first_name=request.data.get('name'), username=mobile_number,mobile_number=mobile_number, role=role)
+                username = id_generator()
+                user = AppUser(email=request.data.get('email'), first_name=request.data.get('name'), username=username,
+                               mobile_number=mobile_number, role=role)
                 user.save()
                 Customer.objects.get_or_create(user=user)
             if request.data.get('password') == 'localshop@123':
