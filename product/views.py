@@ -457,7 +457,7 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending, shop__user=request.user)
+            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending, shop__user=request.user).order_by('id')
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
@@ -481,6 +481,7 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
         except Product.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
+
 class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductListingSerializer
@@ -493,7 +494,7 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
         try:
 
             accepted_orders = Order.objects.filter(Q(status=ORDER_STATUS.accepted) | Q(status=ORDER_STATUS.ready_for_pickup),
-                                                   shop__user=request.user)
+                                                   shop__user=request.user).order_by('id')
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
@@ -528,6 +529,7 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
         }))
     def post(self, request, *args, **kwargs):
         try:
+            vendor_otp = None
             order = Order.objects.get(id=request.data.get('order_id'))
             status = request.data.get('status')
             if status == ORDER_STATUS.accepted:
@@ -537,7 +539,7 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
             order.status = status
             order.save()
             if order.delivery_type == DELIVERY_CHOICES.pickup:
-                vendor_otp = None
+                vendor_otp = vendor_otp
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS,
                                          data={'otp': vendor_otp})
