@@ -9,7 +9,7 @@ from product.models import Product, Category, Brand, ProductVarient, ProductImag
 
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'status')
+    list_display = ('id','name', 'shop_category')
 
 class ProductImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'image',)
