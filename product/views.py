@@ -25,6 +25,7 @@ from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
 from customer.models import Order, OrderItem, DELIVERY_CHOICES
 from user.models import Shop
 from user.serializers import ProfileSerializer
+from user.tasks import manage_product_quantity
 
 db_logger = logging.getLogger('db')
 
@@ -532,6 +533,7 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
             if status == ORDER_STATUS.accepted:
                 vendor_otp = OTPgenerator()
                 order.otp = vendor_otp
+                manage_product_quantity.apply_async(queue='normal', args=(order.id,))
             order.status = status
             order.save()
             if order.delivery_type == DELIVERY_CHOICES.pickup:

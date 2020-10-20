@@ -16,7 +16,7 @@ from utilities.utils import OTPgenerator, id_generator
 from utilities.pagination import CustomOffsetPagination
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
     PaymentMethod, UserPaymentMethod, DeliveryOption
-from user.tasks import deliver_sms, render_to_pdf, delivery_system_call, manage_product_quantity
+from user.tasks import deliver_sms, render_to_pdf, delivery_system_call
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
     DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
 from customer.serializers import OrderHistorySerializer
@@ -525,7 +525,7 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 # order.otp = vendor_otp
                 order.customer_otp = customer_otp
                 try:
-                    manage_product_quantity.apply_async(queue='normal', args=(order.id,))
+                    # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
                     customer_address = order.customer.customer_addresses.last()
                     print(customer_address.lat)
                     data = {
