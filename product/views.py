@@ -22,7 +22,7 @@ from product.serializers import ProductSerializer, ProductPricingSerializer, Pro
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
 from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
     ORDER_STATUS, PAYMENT_STATUS, ProductImage, ProductVarientImage
-from customer.models import Order, OrderItem, Customer
+from customer.models import Order, OrderItem, DELIVERY_CHOICES
 from user.models import Shop
 from user.serializers import ProfileSerializer
 
@@ -534,9 +534,11 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
                 order.otp = vendor_otp
             order.status = status
             order.save()
+            if order.delivery_type == DELIVERY_CHOICES.pickup:
+                vendor_otp = None
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS,
-                                         data={'otp': order.otp})
+                                         data={'otp': vendor_otp})
         except Exception as e:
             db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
