@@ -6,8 +6,7 @@ from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory,
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'is_active')
-
+    list_display = ('username', 'mobile_number', 'role', 'is_active')
 
 
 class DeviceTokenAdmin(admin.ModelAdmin):

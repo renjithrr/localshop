@@ -1,7 +1,7 @@
 from django.db import models
 from utilities.utils import Kw, Konstants
 from localshop.settings.storage_backends import PublicMediaStorage
-from user.models import AuditedModel, Shop
+from user.models import AuditedModel, Shop, ShopCategory
 
 CHOICES = Konstants(
     Kw(available=1, label='Available'),
@@ -40,6 +40,7 @@ class Brand(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
+    shop_category = models.ForeignKey(ShopCategory, on_delete=models.CASCADE, blank=True, null=True)
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True)
 
     def __str__(self):
