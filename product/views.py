@@ -382,7 +382,7 @@ class ProductParamsvView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            shop = Shop.objects.get(id=request.GET.get('shop_id'))
+            shop = Shop.objects.filter(user=request.GET.get('user_id')).last()
             shop_category = shop.shop_category
             category_choices = [{'id': shop.id, 'category': shop.name} for shop in Category.objects.
                 filter(shop_category=shop_category).order_by('id')]
