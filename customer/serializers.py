@@ -30,7 +30,6 @@ class NearbyShopSerializer(serializers.ModelSerializer):
             , 'category', 'pick_up', 'home_delivery']
 
     def get_distance(self, obj):
-        print("ssf")
         location = self.context.get("location")
         if location:
             return round(obj.location.distance(location) * 100, 2)

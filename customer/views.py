@@ -573,6 +573,7 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
             shop_id = request.data.get('shop_id', '')
             shop = Shop.objects.get(id=shop_id)
             distance1 = shop.location.distance(location)
+            service_available_now = True
             if float(distance) < distance1:
                 return self.success_response(code='HTTP_200_OK',
                                              data={'is_delivery_available': False},
@@ -599,6 +600,12 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                 elif DELIVERY_CHOICES.townie_ship in delivery_type:
                     if delivery_details.free_delivery_for and float(total_amount) >= delivery_details.free_delivery_for:
                         delivery_charge = 0
+                        townie_time = shop.service_area.townie_delivery_end
+                        diff = datetime.combine(datetime.today(), townie_time) - datetime.now()
+                        if diff.total_seconds() < 0:
+                            service_available_now = False
+                        else:
+                            service_available_now = True
                     else:
                         delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
                 elif DELIVERY_CHOICES.bulk_delivery in delivery_type:
@@ -608,7 +615,8 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                 db_logger.exception(e)
 
             return self.success_response(code='HTTP_200_OK',
-                                         data={'delivery_charge': delivery_charge},
+                                         data={'delivery_charge': delivery_charge,
+                                               'service_available_now': service_available_now},
                                          message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
