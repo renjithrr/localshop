@@ -16,7 +16,8 @@ from drf_yasg.utils import swagger_auto_schema
 
 from utilities.mixins import ResponseViewMixin
 from utilities.pagination import CustomOffsetPagination
-from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS, PRODUCT_CODE_EXISTS
+from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, NOT_A_CSV_FORMAT, SUCCESS, PRODUCT_CODE_EXISTS,\
+    INVALID_OTP
 from utilities.utils import BulkCreateManager, export_to_csv, id_generator, OTPgenerator
 from product.serializers import ProductSerializer, ProductPricingSerializer, ProductListingSerializer,\
     ProductVarientSerializer, OrderSerializer, OrderDetailSerializer, ProductRetrieveSerializer
@@ -532,23 +533,35 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
         }))
     def post(self, request, *args, **kwargs):
         try:
-            vendor_otp = None
+            # vendor_otp = None
             order = Order.objects.get(id=request.data.get('order_id'))
             status = request.data.get('status')
             if status == ORDER_STATUS.accepted:
                 vendor_otp = OTPgenerator()
                 order.otp = vendor_otp
                 manage_product_quantity.apply_async(queue='normal', args=(order.id,))
+            elif status == ORDER_STATUS.picked_up:
+                otp = request.data.get('otp')
+                if order.otp != otp:
+                    return self.success_response(code='HTTP_400_BAD_REQUEST',
+                                                 data={},
+                                                 message=INVALID_OTP)
+            elif status == ORDER_STATUS.delivered:
+                otp = request.data.get('otp')
+                if order.customer_otp != otp:
+                    return self.success_response(code='HTTP_400_BAD_REQUEST',
+                                                 data={},
+                                                 message=INVALID_OTP)
             order.status = status
             order.save()
-            if order.delivery_type == DELIVERY_CHOICES.pickup:
-                vendor_otp = vendor_otp
+            # if order.delivery_type == DELIVERY_CHOICES.pickup:
+            #     vendor_otp = vendor_otp
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS,
-                                         data={'otp': vendor_otp})
+                                         data={'otp': order.otp})
         except Exception as e:
             db_logger.exception(e)
-            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(e))
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 
 class  ProductPricingView(GenericViewSet, ResponseViewMixin):
