@@ -15,7 +15,7 @@ ORDER_STATUS = Konstants(
     Kw(pending=1, label='Pending'),
     Kw(accepted=2, label='Accepted'),
     Kw(rejected=3, label='Rejected'),
-    Kw(ready_for_pickup=4, label='Ready for pickup'),
+    Kw(picked_up=4, label='Order has picked up'),
     Kw(delivered=5, label='Delivered'),
 )
 
