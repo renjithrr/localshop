@@ -718,13 +718,14 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             try:
                 if payment_type != 'online':
                     # device = FCMDevice.objects.filter(user=request.user, active=True).registration_id
-                    device = FCMDevice.objects.filter(user=request.user, active=True).values_list('registration_id',
+                    device = FCMDevice.objects.filter(user=order.shop.user, active=True).values_list('registration_id',
                                                                                            flat=True)
                     message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
                     push_service = FCMNotification(api_key=settings.FCM_KEY)
                     # response = push_service.notify_single_device(registration_id=device, data_message=message)
                     response = push_service.notify_multiple_devices(registration_ids=list(device), data_message=message)
-                    db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response), request.user))
+                    db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response),
+                                                                                order.shop.user))
             except Exception as e:
                 logging.exception(e)
             return self.success_response(code='HTTP_200_OK',
@@ -753,14 +754,15 @@ class PaymentUpdateView(APIView, ResponseViewMixin):
             order.save()
             try:
                 if order.payment_status == PAYMENT_STATUS.completed:
+                    vendor = order.shop.user
                     # device = FCMDevice.objects.filter(user=request.user, active=True).registration_id
-                    device = FCMDevice.objects.filter(user=request.user, active=True).values_list('registration_id',
+                    device = FCMDevice.objects.filter(user=vendor, active=True).values_list('registration_id',
                                                                                            flat=True)
                     message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
                     push_service = FCMNotification(api_key=settings.FCM_KEY)
                     # response = push_service.notify_single_device(registration_id=device, data_message=message)
                     response = push_service.notify_multiple_devices(registration_ids=list(device), data_message=message)
-                    db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response), request.user))
+                    db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response), order.shop.user))
             except Exception as e:
                 logging.exception(e)
 
