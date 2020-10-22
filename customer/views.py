@@ -716,10 +716,13 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
                     'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': vendor_split}
             try:
-                device = FCMDevice.objects.get(user=request.user, active=True).registration_id
+                # device = FCMDevice.objects.filter(user=request.user, active=True).registration_id
+                device = FCMDevice.objects.filter(user=request.user, active=True).values_list('registration_id',
+                                                                                       flat=True)
                 message = {'data': {'order_id': order.id}, 'type': 'new_order','body': 'A new order has placed'}
                 push_service = FCMNotification(api_key=settings.FCM_KEY)
-                response = push_service.notify_single_device(registration_id=device, data_message=message)
+                # response = push_service.notify_single_device(registration_id=device, data_message=message)
+                response = push_service.notify_multiple_devices(registration_ids=list(device), data_message=message)
                 db_logger.debug('push service to : {0} => {1}==>{2}'.format(order.id, str(response), request.user))
             except Exception as e:
                 logging.exception(e)
