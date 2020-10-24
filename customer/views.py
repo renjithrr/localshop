@@ -635,6 +635,7 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             address_id = request.data.get('address_id', '')
             # address = Address.objects.get(id=address_id)
             token = ''
+            coupon_applied = False
             shop_id = request.data.get('shop_id', '')
             total_amount = 0
             delivery_charge = 0
@@ -685,6 +686,9 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                     else:
                         discount = coupon.discount
                         total_amount = total_amount - discount
+                    order.discount = discount
+                    coupon_applied = True
+
 
             order.grand_total = total_amount
             order.save()
@@ -727,7 +731,8 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             vendor_split = [{'vendorId': '', 'commissionAmount': townie_payment},
                             {'vendorId': '', 'commissionAmount': vendor_payment}]
             data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
-                    'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': vendor_split}
+                    'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': vendor_split,
+                    'coupon_applied': coupon_applied}
             try:
                 if payment_type != 'online':
                     # device = FCMDevice.objects.filter(user=request.user, active=True).registration_id
