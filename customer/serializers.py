@@ -313,17 +313,22 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
     shop = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
     status_label = serializers.SerializerMethodField()
+    shop_available = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = ['shop', 'products', 'grand_total', 'created_at', 'rating', 'customer_otp', 'id', 'status',
-                  'status_label']
+                  'status_label', 'shop_available']
 
     @staticmethod
     def get_shop(obj):
         return NearbyShopSerializer(obj.shop).data
         # return [{'id': obj.shop.id, 'name': obj.shop.shop_name, 'lat': obj.shop.lat, 'long': obj.shop.long,
         #          'rating': obj.shop.rating, 'address': obj.shop.address, 'shop_available': obj.shop.available}]
+
+    @staticmethod
+    def get_shop_available(obj):
+        return obj.shop.available
 
     @staticmethod
     def get_status_label(obj):
