@@ -673,6 +673,19 @@ class GenerateTokenView(APIView, ResponseViewMixin):
                 OrderItem.objects.create(product_id=product, quantity=value['quantity'], rate=rate,
                                          total=total, order_id=order)
             # otp = OTPgenerator()
+            if request.data.get('coupon_code'):
+                try:
+                    coupon = Coupon.objects.get(shops=shop, is_active=True, code=request.data.get('coupon_code'))
+                except Exception as e:
+                    coupon = None
+                if coupon:
+                    if coupon.is_percentage:
+                        discount = total_amount * (coupon.discount/100)
+                        total_amount = total_amount - discount
+                    else:
+                        discount = coupon.discount
+                        total_amount = total_amount - discount
+
             order.grand_total = total_amount
             order.save()
             headers = {
