@@ -711,22 +711,33 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             else:
                 order.payment_type = PAYMENT_CHOICES.cod
                 # order.save()
-            order.delivery_type = request.data.get('delivery_type')
+            # order.delivery_type = request.data.get('delivery_type')
             order.save()
             delivery_details = shop.shop_delivery_options.last()
             delivery_type = int(request.data.get('delivery_type'))
-            try:
-                if delivery_type == DELIVERY_CHOICES.self_delivery:
-                    delivery_charge = delivery_details.delivery_charge
-                elif delivery_type == DELIVERY_CHOICES.townie_ship:
-                    if float(total_amount) >= delivery_details.free_delivery_for:
+            if delivery_type == DELIVERY_CHOICES.pickup:
+                order.delivery_type = request.data.get('delivery_type')
+                order.save()
+            else:
+                try:
+                    delivery_type = delivery_details.delivery_type
+                    delivery_type = list(map(int, delivery_type))
+                    if DELIVERY_CHOICES.self_delivery in delivery_type:
+                        delivery_charge = delivery_details.delivery_charge
+                        order.delivery_type = DELIVERY_CHOICES.self_delivery
+                    elif DELIVERY_CHOICES.townie_ship in delivery_type:
+                        if delivery_details.free_delivery_for and float(total_amount) >= delivery_details.\
+                                free_delivery_for:
+                            delivery_charge = 0
+                        else:
+                            delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
+                        order.delivery_type = DELIVERY_CHOICES.townie_ship
+                    elif DELIVERY_CHOICES.bulk_delivery in delivery_type:
                         delivery_charge = 0
-                    else:
-                        delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
-                elif delivery_type == DELIVERY_CHOICES.bulk_delivery:
-                    delivery_charge = 0
-            except Exception as e:
-                pass
+                        order.delivery_type = DELIVERY_CHOICES.bulk_delivery
+                    order.save()
+                except Exception as e:
+                    db_logger.exception(e)
             townie_payment, vendor_payment = payment_calculation(total_amount,delivery_type,  delivery_details)
             vendor_split = [{'vendorId': '', 'commissionAmount': townie_payment},
                             {'vendorId': '', 'commissionAmount': vendor_payment}]

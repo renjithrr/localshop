@@ -91,3 +91,9 @@ class OrderItem(AuditedModel, models.Model):
 class CustomerFavouriteProduct(AuditedModel, models.Model):
     product = models.ForeignKey(Product, related_name='product_favourites', on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, related_name='customer_favoutites', on_delete=models.CASCADE)
+
+
+class Invoice(AuditedModel, models.Model):
+    invoice_id = models.IntegerField(default=0)
+    order = models.ForeignKey(Order, related_name='order_invoices', on_delete=models.CASCADE)
+    shop = models.ForeignKey(Shop, related_name='shop_invoices', on_delete=models.CASCADE, blank=True, null=True)
