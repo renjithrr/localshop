@@ -26,7 +26,7 @@ from product.models import Product, ProductVarient, Category, UNIT_CHOICES,\
 from customer.models import Order, OrderItem, DELIVERY_CHOICES
 from user.models import Shop
 from user.serializers import ProfileSerializer
-from user.tasks import manage_product_quantity
+from user.tasks import manage_product_quantity, delivery_system_call
 
 db_logger = logging.getLogger('db')
 
@@ -540,6 +540,23 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
                 vendor_otp = OTPgenerator()
                 order.otp = vendor_otp
                 manage_product_quantity.apply_async(queue='normal', args=(order.id,))
+                try:
+                    # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
+                    customer_address = order.customer.customer_addresses.last()
+
+                    data = {
+                        "order_id": str(order.id),
+                        "lat": customer_address.lat,
+                        "long": customer_address.long
+                    }
+                    delivery_system_call.apply_async(queue='normal', args=(),
+                                                     kwargs=data)
+                    # delivery_system_call(data)
+                    # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                    #                          headers = {'content-type': 'application/json'})
+                    # print(response.text)
+                except Exception as e:
+                    db_logger.exception(e)
             elif status == ORDER_STATUS.picked_up:
                 otp = request.data.get('otp')
                 if order.otp != otp:

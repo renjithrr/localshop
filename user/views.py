@@ -530,23 +530,23 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 customer_otp = OTPgenerator()
                 # order.otp = vendor_otp
                 order.customer_otp = customer_otp
-                try:
-                    # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
-                    customer_address = order.customer.customer_addresses.last()
-
-                    data = {
-                        "order_id": str(order.id),
-                        "lat": customer_address.lat,
-                        "long": customer_address.long
-                    }
-                    delivery_system_call.apply_async(queue='normal', args=(),
-                                            kwargs=data)
-                    # delivery_system_call(data)
-                    # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
-                    #                          headers = {'content-type': 'application/json'})
-                    # print(response.text)
-                except Exception as e:
-                    db_logger.exception(e)
+                # try:
+                #     # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
+                #     customer_address = order.customer.customer_addresses.last()
+                #
+                #     data = {
+                #         "order_id": str(order.id),
+                #         "lat": customer_address.lat,
+                #         "long": customer_address.long
+                #     }
+                #     delivery_system_call.apply_async(queue='normal', args=(),
+                #                             kwargs=data)
+                #     # delivery_system_call(data)
+                #     # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                #     #                          headers = {'content-type': 'application/json'})
+                #     # print(response.text)
+                # except Exception as e:
+                #     db_logger.exception(e)
                 try:
                     from django.http import HttpResponse
                     from django.template import RequestContext, loader
