@@ -95,13 +95,13 @@ padding-top:55px;
 <table class ="topspace" style="max-width:300px;">
     <tr >
     <td style="font-weight: bold; max-width:10px;">PAN No:</td>
-    <td>{{pan_no}}</td>
+    <td>{{pan_number}}</td>
     <td></td>
     <td></td>
   </tr>
   <tr>
     <td style="font-weight: bold;">GST No:</td>
-    <td>{{gst_no}}</td>
+    <td>{{gst_number}}</td>
     <td></td>
     <td></td>
   </tr>
@@ -125,15 +125,15 @@ padding-top:55px;
 
   <tr >
     <td style="font-weight: bold;">Order No:</td>
-    <td>{{order_no}}</td>
+    <td>{{order.id}}</td>
     <td style="font-weight: bold;">Invoice No:</td>
-    <td>{{invoice_id}}</td>
+    <td>{{invoice_number}}</td>
   </tr>
   <tr>
     <td style="font-weight: bold;">Order Date:</td>
-    <td>{{order_date}}</td>
+    <td>{{order.created_at}}</td>
     <td style="font-weight: bold;">Invoice Date:</td>
-    <td>{{invoice_date}}</td>
+    <td>{{invoice.created_at}}</td>
   </tr>
   
 </table>
@@ -152,28 +152,12 @@ padding-top:55px;
     <th>KFC</th>
     <th>Total</th>
   </tr>
-  <tr>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
+  {% for product in products %}
+   <tr>
+       <td>{{a.answer}}</td>
+   {% endfor %}
+   </tr>
+   {% endfor %}
     <td style="font-weight: bold;"></td>
   </tr>
   

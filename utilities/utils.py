@@ -193,11 +193,11 @@ def deliver_email(email_id):
     else:
         print(response)
 
-
-@shared_task()
-def delivery_system_call(**data):
-    response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
-                             headers={'content-type': 'application/json'})
+#
+# @shared_task()
+# def delivery_system_call(**data):
+#     response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+#                              headers={'content-type': 'application/json'})
 
 
 
@@ -353,3 +353,4 @@ def render_to_pdf(template_src, email, context_dict={}):
         # deliver_email(email)
         # return HttpResponse(result.getvalue(), content_type='application/pdf')
     return None
+

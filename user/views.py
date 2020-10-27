@@ -533,7 +533,7 @@ class OrderProcessView(APIView, ResponseViewMixin):
                 try:
                     # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
                     customer_address = order.customer.customer_addresses.last()
-                    print(customer_address.lat)
+
                     data = {
                         "order_id": str(order.id),
                         "lat": customer_address.lat,
