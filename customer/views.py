@@ -192,8 +192,11 @@ class ProductListing(APIView, ResponseViewMixin):
             #     products = Product.objects.filter(shop__in=list(shops.values_list('id', flat=True)))
             shop = Shop.objects.get(id=request.GET.get('shop_id'))
             search = request.GET.get('search', '')
+            if search:
+                categories = Category.objects.filter(product__name__icontains=search, product__shop=shop)
             # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
-            categories = Category.objects.filter(product__isnull=False, product__shop=shop)
+            else:
+                categories = Category.objects.filter(product__isnull=False, product__shop=shop)
             product_serializer = CustomerProductSerializer(categories, context={'shop': shop, 'search': search},
                                                            many=True)
             # product_serializer = CustomerProductSerializer(products, many=True)
