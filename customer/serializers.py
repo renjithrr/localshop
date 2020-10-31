@@ -186,10 +186,10 @@ class CustomerProductSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         shop = self.context.get('shop')
         products = Product.objects.filter(shop=shop, category=obj)
-        # search = self.context.get('search')
+        search = self.context.get('search')
         # # print(self.context.get('user'), "Dddddddd")
-        # if search:
-        #     products = products.filter(name__icontains=search)
+        if search:
+            products = products.filter(name__icontains=search)
         return ProductListSerializer(products, context=self.context.get('user'), many=True).data
         # return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
         #          'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
