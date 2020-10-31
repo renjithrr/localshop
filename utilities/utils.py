@@ -343,14 +343,14 @@ def payment_calculation(mrp, delivery_type, delivery_method):
 # def render_to_pdf(template_src, context_dict):
 
 # @shared_task()
-def render_to_pdf(template_src, email, context_dict={}):
-    template = get_template(template_src)
-    html = template.render(context_dict)
-    result = BytesIO()
-    pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
-    if not pdf.err:
-        pass
-        # deliver_email(email)
-        # return HttpResponse(result.getvalue(), content_type='application/pdf')
-    return None
+# def render_to_pdf(template_src, email, context_dict={}):
+#     template = get_template(template_src)
+#     html = template.render(context_dict)
+#     result = BytesIO()
+#     pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+#     if not pdf.err:
+#         pass
+#         # deliver_email(email)
+#         # return HttpResponse(result.getvalue(), content_type='application/pdf')
+#     return None
 

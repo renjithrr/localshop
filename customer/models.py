@@ -70,6 +70,7 @@ class Order(AuditedModel, models.Model):
     payment_message = models.TextField(blank=True, null=True)
     cod = models.BooleanField(default=True)
     delivery_type = models.IntegerField(choices=DELIVERY_CHOICES.choices(), blank=True, null=True)
+    delivery_charge = models.FloatField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return str(self.id)

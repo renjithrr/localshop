@@ -6,13 +6,19 @@ import smtplib
 import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+
 import requests
 import json
 from botocore.exceptions import ClientError
 from celery import shared_task
 from io import BytesIO
-from customer.models import OrderItem, Invoice
-from user.models import DELIVERY_CHOICES
+from customer.models import OrderItem, Invoice, Customer, Order
+from product.models import Product
+from user.models import DELIVERY_CHOICES, AppConfigData
+from django.http import HttpResponse
+from django.conf import settings
+
 
 from xhtml2pdf import pisa
 from django.template.loader import get_template
@@ -107,25 +113,30 @@ def deliver_sms(mobile_number, otp):
 #     else:
 #         print(response)
 
-# @shared_task
-def deliver_email(email_id):
+@shared_task
+def deliver_email(pdf, customer_email, shop_email, pdf_name):
+    print("fdf")
     from user.models import AppConfigData
-    # aws_access_key_id = AppConfigData.objects.get(key='AWS_ACCESS_KEY_ID').value
-    # aws_secret_access_key = AppConfigData.objects.get(key='AWS_SECRET_ACCESS_KEY').value
+    USERNAME_SMTP = AppConfigData.objects.get(key='USERNAME_SMTP').value
+    PASSWORD_SMTP = AppConfigData.objects.get(key='PASSWORD_SMTP').value
     # applicationId = AppConfigData.objects.get(key='APPLICATION_ID').value
     SENDER = 'townie.store@gmail.com'
     SENDERNAME = 'Townie'
-    USERNAME_SMTP = "AKIAYCYS6KN3IN26ZJIJ"
-    PASSWORD_SMTP = "BKucBsmYcB/g+rcf78XqAEPbwqFg74sILvTpZxkB0fPc"
+    USERNAME_SMTP = USERNAME_SMTP
+    PASSWORD_SMTP = PASSWORD_SMTP
     HOST = "email-smtp.us-east-2.amazonaws.com"
     PORT = 587
     SUBJECT = 'Townie Invoice'
-    msg = MIMEMultipart('alternative')
+    msg = MIMEMultipart()
+    to = ', '.join([customer_email, shop_email])
     msg['Subject'] = SUBJECT
     msg['From'] = email.utils.formataddr((SENDERNAME, SENDER))
-    msg['To'] = email_id
+    msg['To'] = to
     part1 = MIMEText('Test', 'plain')
     msg.attach(part1)
+    part = MIMEApplication(pdf)
+    part.add_header('Content-Disposition', 'attachment', filename=pdf_name)
+    msg.attach(part)
     # part2 = MIMEText(BODY_HTML, 'html')
     try:
         server = smtplib.SMTP(HOST, PORT)
@@ -134,12 +145,15 @@ def deliver_email(email_id):
         # stmplib docs recommend calling ehlo() before & after starttls()
         server.ehlo()
         server.login(USERNAME_SMTP, PASSWORD_SMTP)
-        server.sendmail(SENDER, email_id, msg.as_string())
+
+        print(to)
+        server.sendmail(SENDER, to, msg.as_string())
         server.close()
     # Display an error message if something goes wrong.
     except Exception as e:
-        print("Error: ", e)
+        db_logger.exception(e)
     else:
+        db_logger.info("email sent to {0} - {1}".format(customer_email, shop_email))
         print("Email sent!")
 
 
@@ -251,63 +265,176 @@ def delivery_system_call(**data):
 #         x += 1
 
 
-
-# This code is contributed
-# by Mithun Kumar
-
 @shared_task()
-def render_to_pdf(product, delivery_type, customer, order):
-    # x = product.mrp
-    # tax_rate = int(product.tax_rate)
-    # if tax_rate == 5:
-    #     y = (100 * x)/105
-    #     cgst = 0.0238095238 * x
-    #     sgst = 0.0238095238 * x
-    # elif tax_rate == 12:
-    #     y = (100 * x)/113
-    #     kfc = y/100
-    #     cgst = (0.1150442478 *x - kfc) / 2
-    #     sgst = (0.1150442478 *x - kfc) / 2
-    #
-    # elif tax_rate == 18:
-    #     y = 100 * x/119
-    #     kfc = y/100
-    #     cgst = (0.1596638655 *x - kfc) / 2
-    #     sgst = (0.1596638655 *x - kfc) / 2
-    #
-    # elif tax_rate == 28:
-    #     y = 100 * x/129
-    #     kfc = y/100
-    #     cgst = (0.2248062016 *x - kfc) / 2
-    #     sgst = (0.2248062016 *x - kfc) / 2
-    #
-    #
-    # gst_number = product.shop.gst_reg_number
-    # pan_number = gst_number[2:12]
-    # billing_address = customer.customer_addresses.filter(is_deleted=False).last()
-    # shipping_address = customer.customer_addresses.filter(is_deleted=False).last()
-    # vendor_address = order.shop.address
-    # order_id = order.id
-    # invoice = Invoice.objects.filter(shop=order.shop)
-    # # amount_words = convert_to_words()
-    # if delivery_type == DELIVERY_CHOICES.self_delivery:
-    #     pass
-    # if invoice:
-    #     invoice_number = invoice.last().invoice_id + 1
-    #     Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
-    # else:
-    #     invoice_number = 1
-    #     Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
-    # template = get_template(template_src)
-    # html = template.render(context_dict)
-    # result = BytesIO()
-    # pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
-    # if not pdf.err:
-    #     pass
-    #     deliver_email(email)
-        # return HttpResponse(result.getvalue(), content_type='application/pdf')
-    return None
+def render_to_pdf(delivery_type, customer, order, delivery_charge):
+    try:
+        customer = Customer.objects.get(id=customer)
+        order = Order.objects.get(id=order)
+        gst_number = order.shop.gst_reg_number
+        pan_number = gst_number[2:12]
+        billing_address = customer.customer_addresses.filter(is_deleted=False).last().address
+        shipping_address = customer.customer_addresses.filter(is_deleted=False).last().address
+        vendor_address = order.shop.address
+        sold_by = vendor_address
+        order_id = order.id
+        customer_email = customer.user.email
+        shop_email = order.shop.user.email
+        invoice = Invoice.objects.filter(shop=order.shop)
+        if invoice:
+            invoice_number = invoice.last().invoice_id + 1
+            created_at = invoice.last().created_at
+            Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
+        else:
+            invoice_number = 1
+            invoice = Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
+            created_at = invoice.created_at
+        # amount_words = convert_to_words()
+        order_items = order.order_items.all()
+        product_details = []
+        igst = 0
+        cgst = 0
+        sgst = 0
+        kfc = 0
+        grand_sum = grand_total = 0
+        for value in order_items:
+            x = value.product_id.mrp
+            print(value.product_id)
+            tax_rate = int(value.product_id.tax_rate)
+            if tax_rate == 5:
+                y = (100 * x) / 105
+                cgst = 0.0238095238 * x
+                sgst = 0.0238095238 * x
+            elif tax_rate == 12:
+                y = (100 * x) / 113
+                kfc = y / 100
+                cgst = (0.1150442478 * x - kfc) / 2
+                sgst = (0.1150442478 * x - kfc) / 2
 
+            elif tax_rate == 18:
+                y = 100 * x / 119
+                kfc = y / 100
+                cgst = (0.1596638655 * x - kfc) / 2
+                sgst = (0.1596638655 * x - kfc) / 2
+
+            elif tax_rate == 28:
+                y = 100 * x / 129
+                kfc = y / 100
+                cgst = (0.2248062016 * x - kfc) / 2
+                sgst = (0.2248062016 * x - kfc) / 2
+            grand_total = value.total + cgst + sgst + kfc
+            grand_sum += grand_total
+            product_details.append({'name': value.product_id.name, 'quantity': value.quantity, 'unit_prize': value.rate,
+                                    'total': value.total, 'cgst': round(cgst, 2),'sgst': round(sgst, 2),
+                                    'igst': round(igst, 2), 'kfc': round(kfc, 2),
+                                    'grand_total': grand_total})
+        if delivery_type == DELIVERY_CHOICES.pickup or delivery_type == DELIVERY_CHOICES.bulk_delivery:
+            product_details = product_details
+        elif delivery_type == DELIVERY_CHOICES.self_delivery:
+            x = delivery_charge
+            y = 100 * x / 129
+            kfc = y / 100
+            cgst = (0.2248062016 * x - kfc) / 2
+            sgst = (0.2248062016 * x - kfc) / 2
+            grand_total = x + cgst + sgst + kfc
+            product_details.append({'name': 'Delivery charge', 'quantity': 1, 'unit_prize': x,
+                                    'total': x, 'cgst': round(cgst, 2),'sgst': round(sgst, 2),
+                                    'igst': round(igst, 2), 'kfc': round(kfc, 2),
+                                    'grand_total': grand_total})
+            product_details = product_details
+            grand_sum += grand_total
+        elif delivery_type == DELIVERY_CHOICES.townie_ship:
+            # grand_total = value.total + cgst + sgst + kfc
+            delivery_details = order.shop.shop_delivery_options.last()
+            if float(grand_total) > delivery_details.free_delivery_for:
+                shipping_address = billing_address
+                sold_by = 'Townie'
+                townie_referal = AppConfigData.objects.get(key='TOWNIE_REFERRAL_PERCENTAGE').value
+                townie_referal = float(townie_referal) / 100
+                referal_fee = townie_referal * order.grand_total * 1.18
+                tsf = 0.0236 * order.grand_total
+                x = referal_fee + tsf
+                y = 100 * x / 129
+                kfc = y / 100
+                cgst = (0.2248062016 * x - kfc) / 2
+                sgst = (0.2248062016 * x - kfc) / 2
+                grand_total = x + cgst + sgst + kfc
+                townie_details = []
+                billing_address = vendor_address
+                townie_details.append({'name': 'Service charge', 'quantity': 1, 'unit_prize': x,
+                                        'total': x, 'cgst': round(cgst, 2), 'sgst': round(sgst, 2),
+                                        'igst': round(igst, 2), 'kfc': round(kfc, 2),
+                                        'grand_total': grand_total})
+                context = {
+                    "invoice": invoice_number,
+                    "billing_address": billing_address,
+                    "shipping_address": '',
+                    "order_no": order_id,
+                    "order_date": order.created_at,
+                    "invoice_date": created_at,
+                    "amount_words": "",
+                    "pan_no": pan_number,
+                    "gst_no": gst_number,
+                    "product_details": townie_details,
+                    # "vendor_address": vendor_address,
+                    "sold_by": sold_by
+                }
+                template = get_template('townie_Invoice.html')
+                html = template.render(context)
+                result = BytesIO()
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+            else:
+                x = delivery_charge
+                y = 100 * x / 129
+                kfc = y / 100
+                cgst = (0.2248062016 * x - kfc) / 2
+                sgst = (0.2248062016 * x - kfc) / 2
+                grand_total = x + cgst + sgst + kfc
+                product_details.append({'name': 'Delivery charge', 'quantity': 1, 'unit_prize': x,
+                                        'total': x, 'cgst': round(cgst, 2), 'sgst': round(sgst, 2),
+                                        'igst': round(igst, 2), 'kfc': round(kfc,2 ),
+                                        'grand_total': grand_total})
+                product_details = product_details
+                grand_sum += grand_total
+
+        context = {
+            "invoice": invoice_number,
+            "billing_address": billing_address,
+            "shipping_address": shipping_address,
+            "order_no": order_id,
+            "order_date": order.created_at,
+            "invoice_date": created_at,
+            "amount_words": "",
+            "pan_no": pan_number,
+            "gst_no": gst_number,
+            "product_details": product_details,
+            "vendor_address": vendor_address,
+            "sold_by": sold_by
+        }
+
+        template = get_template('townie_Invoice.html')
+        html = template.render(context)
+        file = open(settings.MEDIA_ROOT + str(invoice_number) + '.pdf', "w+b")
+        pisaStatus = pisa.CreatePDF(html.encode('utf-8'), dest=file,
+                                    encoding='utf-8')
+        file.seek(0)
+        pdf = file.read()
+        deliver_email.apply_async(queue='normal', args=(pdf,
+                                                        customer_email,
+                                                        shop_email,
+                                                        str(invoice_number) + '.pdf'))
+        # deliver_email(pdf, customer_email, shop_email, str(invoice_number) + '.pdf')
+        file.close()
+        return HttpResponse(pdf, 'application/pdf')
+        # result = BytesIO()
+        # pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+        # if not pdf.err:
+        #     # pass
+            # deliver_email(email)
+        #     return HttpResponse(result.getvalue(), content_type='application/pdf')
+        # return None
+    except Exception as e:
+        print(e)
+        db_logger.exception(e)
 
 @shared_task()
 def manage_product_quantity(order_id):

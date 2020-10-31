@@ -30,9 +30,7 @@ margin-top: 25px;
 padding-top:55px;
 }
 .btmspace{margin-bottom:15px;}
-.detailtable tr:nth-child(even) {
-  ##background-color: #f2f2f2;
-}
+
 
     @media only screen and (max-width: 600px) {
         .invoice-box table tr.top table td {
@@ -54,69 +52,48 @@ padding-top:55px;
 <body>
     <div class="invoice-box">
 
-
-
 <table class="btmspace">
-  <tr>
-    <th></th>
-    <th></th>
-   </tr>
+
   <tr>
     <td><img src="https://www.sparksuite.com/images/logo.png" style="width:100%; max-width:300px;"></td>
     <td class="right">Tax Invoice/Bill of Supply/Cash </td>
   </tr>
-  <tr><td></td><td></td></tr>
   <tr>
     <td>Memo</td>
-    <td></td>
   </tr>
 </table>
 <table>
-  <tr>
-    <th></th>
-    <th></th>
-    <th></th>
-    <th></th>
-   </tr>
+
 
   <tr class ="topspace">
     <td style="font-weight: bold;">Sold By:</td>
-    <td></td>
-    <td></td>
+
     <td class="right" style="font-weight: bold;">Billing Address:</td>
   </tr>
   <tr>
-    <td>vender address</td>
-    <td></td>
-    <td></td>
+    <td>{{sold_by}}</td>
+
     <td class="right">{{billing_address}} </td>
   </tr>
   </table>
 <table class ="topspace" style="max-width:300px;">
     <tr >
     <td style="font-weight: bold; max-width:10px;">PAN No:</td>
-    <td>{{pan_number}}</td>
-    <td></td>
-    <td></td>
+    <td>{{pan_no}}</td>
   </tr>
   <tr>
     <td style="font-weight: bold;">GST No:</td>
-    <td>{{gst_number}}</td>
-    <td></td>
-    <td></td>
+    <td>{{gst_no}}</td>
+
   </tr>
   </table>
 <table>
   <tr>
-    <td></td>
-    <td></td>
-    <td></td>
+
     <td class="right" style="font-weight: bold;">Shipping Address:</td>
   </tr>
   <tr>
-    <td></td>
-    <td></td>
-    <td></td>
+
     <td class="right" style="max-width:500px;">{{shipping_address}}</td>
   </tr>
   
@@ -125,15 +102,15 @@ padding-top:55px;
 
   <tr >
     <td style="font-weight: bold;">Order No:</td>
-    <td>{{order.id}}</td>
+    <td>{{order_no}}</td>
     <td style="font-weight: bold;">Invoice No:</td>
-    <td>{{invoice_number}}</td>
+    <td>{{invoice}}</td>
   </tr>
   <tr>
     <td style="font-weight: bold;">Order Date:</td>
-    <td>{{order.created_at}}</td>
+    <td>{{order_date}}</td>
     <td style="font-weight: bold;">Invoice Date:</td>
-    <td>{{invoice.created_at}}</td>
+    <td>{{invoice_date}}</td>
   </tr>
   
 </table>
@@ -152,25 +129,32 @@ padding-top:55px;
     <th>KFC</th>
     <th>Total</th>
   </tr>
-  {% for product in products %}
+  {% for product in product_details %}
    <tr>
-       <td>{{a.answer}}</td>
-   {% endfor %}
+       <td>{{ forloop.counter }}</td>
+       <td>{{ product.name }}</td>
+       <td>{{ product.unit_prize }}</td>
+       <td>{{ product.quantity }}</td>
+       <td>{{ product.total }}</td>
+       <td>{{ product.cgst }}</td>
+       <td>{{ product.sgst }}</td>
+       <td>{{ product.igst }}</td>
+       <td>{{ product.kfc }}</td>
+       <td>{{ product.grand_total }}</td>
+
    </tr>
    {% endfor %}
     <td style="font-weight: bold;"></td>
-  </tr>
   
 </table>
- <table class="topspace">
- <tr></tr>
- </table>
+
 <span> Amount in Words: </span> <span id="aw" style = "text-transform:capitalize; font-weight: bold">{{amount_words}}  </span>
 
 <p style="width:100%">
 <img src="https://www.sparksuite.com/images/logo.png" align="right" style="width:100%; max-width:300px;">
 </div>
 <p align="right" style ="font-weight: bold; margin-right:76px">Authorized Signatory</p>
-    </div>
+
 </body>
 </html>
+

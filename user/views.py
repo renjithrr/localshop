@@ -512,7 +512,7 @@ class ShopAvailabilityView(APIView, ResponseViewMixin):
 
 
 class OrderProcessView(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     # @swagger_auto_schema(tags=['user', 'customer'], request_body=openapi.Schema(
     #     type=openapi.TYPE_OBJECT,
@@ -521,78 +521,18 @@ class OrderProcessView(APIView, ResponseViewMixin):
     #     }))
     def post(self, request):
         order_id = request.data.get('order_id')
-        accept = request.data.get('is_accepted')
+        status = request.data.get('status')
         try:
             order = Order.objects.get(id=order_id)
-            if accept:
-                order.status = ORDER_STATUS.accepted
-                # vendor_otp = OTPgenerator()
-                customer_otp = OTPgenerator()
-                # order.otp = vendor_otp
-                order.customer_otp = customer_otp
-                # try:
-                #     # manage_product_quantity.apply_async(queue='normal', args=(order.id,))
-                #     customer_address = order.customer.customer_addresses.last()
-                #
-                #     data = {
-                #         "order_id": str(order.id),
-                #         "lat": customer_address.lat,
-                #         "long": customer_address.long
-                #     }
-                #     delivery_system_call.apply_async(queue='normal', args=(),
-                #                             kwargs=data)
-                #     # delivery_system_call(data)
-                #     # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
-                #     #                          headers = {'content-type': 'application/json'})
-                #     # print(response.text)
-                # except Exception as e:
-                #     db_logger.exception(e)
-                try:
-                    from django.http import HttpResponse
-                    from django.template import RequestContext, loader
-                    # template = loader.get_template('townie_Invoice.html')
-                    context = {
-                        "invoice_id": 123,
-                        "billing_address": "John Cooper",
-                        "shipping_address": 1399.99,
-                        "order_no": order.id,
-                        "order_date": order.created_at,
-                        "invoice_date": order.created_at,
-                        "amount_words": "test",
-                        "pan_no": "test",
-                        "gst_no": "123"
 
-                    }
-                    email= ''
-                    # html = template.render(context)
-                    # render_to_pdf.apply_async(queue='normal', args=(html, email, context),
-                    #                         kwargs={})
-                    pdf = render_to_pdf('townie_Invoice.html', context)
-                    # if pdf:
-                    #     response = HttpResponse(pdf, content_type='application/pdf')
-                    #     filename = "Invoice_%s.pdf" % ("12341231")
-                    #     content = "inline; filename='%s'" % (filename)
-                    #     download = request.GET.get("download")
-                    #     if download:
-                    #         content = "attachment; filename='%s'" % (filename)
-                    #     response['Content-Disposition'] = content
-                    #     return response
-                    # return HttpResponse("Not found")
-                except Exception as e:
-                    print(e)
-
-                    # logging.exception(e)
-                order.save()
-
-            else:
-                order.status = ORDER_STATUS.rejected
-
+            # pdf = render_to_pdf(1, order.customer, order, 30)
+            order.status = status
+            order.save()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
-                                         data={'otp': order.otp})
+                                         data={})
 
         except Exception as e:
-            # db_logger.exception(e)
-            print(e)
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
 

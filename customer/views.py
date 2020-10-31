@@ -744,6 +744,8 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             data = {'order_id': order.id, 'token': token, 'total_amount': total_amount, 'currency': 'INR',
                     'shipping_charge': delivery_charge, 'discount': order.discount, 'vendor_split': vendor_split,
                     'coupon_applied': coupon_applied}
+            order.delivery_charge = delivery_charge
+            order.save()
             try:
                 if payment_type != 'online':
                     # device = FCMDevice.objects.filter(user=request.user, active=True).registration_id
