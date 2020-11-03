@@ -542,26 +542,27 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
                 customer_otp = OTPgenerator()
                 order.customer_otp = customer_otp
                 manage_product_quantity.apply_async(queue='normal', args=(order.id,))
-                try:
-                    customer_address = order.customer.customer_addresses.last()
+                if order.delivery_type == DELIVERY_CHOICES.townie_ship:
+                    try:
+                        customer_address = order.customer.customer_addresses.last()
 
-                    data = {
-                        "order_id": str(order.id),
-                        "lat": float(customer_address.lat),
-                        "long": float(customer_address.long)
-                    }
-                    delivery_system_call.apply_async(queue='normal', args=(),
-                                                     kwargs=data)
-                    render_to_pdf.apply_async(queue='normal', args=(order.delivery_type,
-                                                                    order.customer.id,
-                                                                    order.id,
-                                                                    order.delivery_charge))
-                    # delivery_system_call(data)
-                    # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
-                    #                          headers = {'content-type': 'application/json'})
-                    # print(response.text)
-                except Exception as e:
-                    db_logger.exception(e)
+                        data = {
+                            "order_id": str(order.id),
+                            "lat": float(customer_address.lat),
+                            "long": float(customer_address.long)
+                        }
+                        delivery_system_call.apply_async(queue='normal', args=(),
+                                                         kwargs=data)
+                        render_to_pdf.apply_async(queue='normal', args=(order.delivery_type,
+                                                                        order.customer.id,
+                                                                        order.id,
+                                                                        order.delivery_charge))
+                        # delivery_system_call(data)
+                        # response = requests.post('http://18.222.159.212:8080/v1/assignorder', data=json.dumps(data),
+                        #                          headers = {'content-type': 'application/json'})
+                        # print(response.text)
+                    except Exception as e:
+                        db_logger.exception(e)
             elif status == ORDER_STATUS.picked_up:
                 otp = request.data.get('otp')
                 if order.otp != otp:

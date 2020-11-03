@@ -2,6 +2,7 @@ import logging
 import json
 import requests
 from django.contrib.gis.geos import Point
+from django.db.models import Q
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -470,7 +471,9 @@ class  ShopOrderHistoryView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            delivered_orders = Order.objects.filter(status=ORDER_STATUS.delivered, shop__user=request.user)
+            delivered_orders = Order.objects.filter(
+            Q(status=ORDER_STATUS.delivered, shop__user=request.user) |
+            Q(status=ORDER_STATUS.picked_up, shop__user=request.user))
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
