@@ -415,7 +415,6 @@ class SalesView(APIView, ResponseViewMixin):
                 profile_info = serializer.data
                 todays_sale = Order.objects.filter(payment_status=PAYMENT_STATUS.completed, shop__user=request.user,
                                                    created_at__date=date.today()).aggregate(Sum('grand_total'))
-                yesterday = date.today() - timedelta(days=1)
                 last_7_days = date.today() - timedelta(days=7)
                 last_7_days = Order.objects.filter(payment_status=PAYMENT_STATUS.completed, shop__user=request.user,
                                                    created_at__date__range=(last_7_days, date.today())).aggregate(
@@ -461,7 +460,8 @@ class  PendingOrderView(GenericViewSet, ResponseViewMixin):
     # @swagger_auto_schema(tags=['product'], manual_parameters=[test_param])
     def list(self, request, *args, **kwargs):
         try:
-            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending, shop__user=request.user).order_by('id')
+            pending_orders = Order.objects.filter(status=ORDER_STATUS.pending, shop__user=request.user).distinct()
+            pending_orders = pending_orders.order_by('id')
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
@@ -498,7 +498,8 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
         try:
 
             accepted_orders = Order.objects.filter(Q(status=ORDER_STATUS.accepted) | Q(status=ORDER_STATUS.ready_for_pickup),
-                                                   shop__user=request.user).order_by('id')
+                                                   shop__user=request.user).distinct()
+            accepted_orders = accepted_orders.order_by('id')
             # if 'search' in request.GET:
             #    search_term = request.GET.get('search')
             #    products = products.filter(name__icontains=search_term)
