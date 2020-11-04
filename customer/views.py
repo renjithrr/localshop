@@ -603,12 +603,12 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                 elif DELIVERY_CHOICES.townie_ship in delivery_type:
                     if delivery_details.free_delivery_for and float(total_amount) >= delivery_details.free_delivery_for:
                         delivery_charge = 0
-                        townie_time = shop.service_area.townie_delivery_end
-                        diff = datetime.combine(datetime.today(), townie_time) - datetime.now()
-                        if diff.total_seconds() < 0:
-                            service_available_now = False
-                        else:
+                        townie_delivery_end = shop.service_area.townie_delivery_end
+                        townie_delivery_start = shop.service_area.townie_delivery_start
+                        if townie_delivery_start < datetime.now() < townie_delivery_end:
                             service_available_now = True
+                        else:
+                            service_available_now = False
                     else:
                         delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
                 elif DELIVERY_CHOICES.bulk_delivery in delivery_type:

@@ -103,7 +103,7 @@ class ServiceArea(AuditedModel, models.Model):
     lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     long = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = models.PointField(default='POINT (0 0)',srid=4326)
-    # townie_delivery_start = models.TimeField(blank=True, null=True)
+    townie_delivery_start = models.TimeField(blank=True, null=True)
     townie_delivery_end = models.TimeField(blank=True, null=True)
     # self_delivery_start = models.TimeField(blank=True, null=True)
     # self_delivery_end = models.TimeField(blank=True, null=True)

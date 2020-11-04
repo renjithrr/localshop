@@ -115,7 +115,6 @@ def deliver_sms(mobile_number, otp):
 
 @shared_task
 def deliver_email(pdf, customer_email, shop_email, pdf_name):
-    print("fdf")
     from user.models import AppConfigData
     USERNAME_SMTP = AppConfigData.objects.get(key='USERNAME_SMTP').value
     PASSWORD_SMTP = AppConfigData.objects.get(key='PASSWORD_SMTP').value
@@ -232,26 +231,24 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
         if delivery_type == DELIVERY_CHOICES.pickup:
             product_details = product_details
         elif delivery_type == DELIVERY_CHOICES.self_delivery or delivery_type == DELIVERY_CHOICES.bulk_delivery:
-            delivery_details = order.shop.shop_delivery_options.last()
-            if float(grand_total) < delivery_details.free_delivery_for:
-                x = delivery_charge
-                y = 100 * x / 129
-                kfc = y / 100
-                cgst = (0.2248062016 * x - kfc) / 2
-                sgst = (0.2248062016 * x - kfc) / 2
-                grand_total = x + cgst + sgst + kfc
-                product_details.append({'name': 'Delivery charge', 'quantity': 1, 'unit_prize': x,
-                                        'total': x, 'cgst': round(cgst, 2),'sgst': round(sgst, 2),
-                                        'igst': round(igst, 2), 'kfc': round(kfc, 2),
-                                        'grand_total': grand_total})
-                product_details = product_details
-                grand_sum += grand_total
-            else:
-                product_details = product_details
-        elif delivery_type == DELIVERY_CHOICES.townie_ship:
+            x = delivery_charge
+            y = 100 * x / 129
+            kfc = y / 100
+            cgst = (0.2248062016 * x - kfc) / 2
+            sgst = (0.2248062016 * x - kfc) / 2
+            grand_total = x + cgst + sgst + kfc
+            product_details.append({'name': 'Delivery charge', 'quantity': 1, 'unit_prize': x,
+                                    'total': x, 'cgst': round(cgst, 2),'sgst': round(sgst, 2),
+                                    'igst': round(igst, 2), 'kfc': round(kfc, 2),
+                                    'grand_total': grand_total})
             product_details = product_details
-            shipping_address = billing_address
-            sold_by = 'Townie'
+            grand_sum += grand_total
+
+        elif delivery_type == DELIVERY_CHOICES.townie_ship:
+            invoice = invoice.last()
+            townie_invoice_id = invoice.townie_invoice_id +1
+            invoice.townie_invoice_id = townie_invoice_id
+            invoice.save()
             townie_referal = AppConfigData.objects.get(key='TOWNIE_REFERRAL_PERCENTAGE').value
             townie_referal = float(townie_referal) / 100
             referal_fee = townie_referal * order.grand_total * 1.18
@@ -263,15 +260,14 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
             sgst = (0.2248062016 * x - kfc) / 2
             grand_total = x + cgst + sgst + kfc
             townie_details = []
-            billing_address = vendor_address
             townie_details.append({'name': 'Service charge', 'quantity': 1, 'unit_prize': x,
-                                    'total': x, 'cgst': round(cgst, 2), 'sgst': round(sgst, 2),
-                                    'igst': round(igst, 2), 'kfc': round(kfc, 2),
-                                    'grand_total': grand_total})
+                                   'total': x, 'cgst': round(cgst, 2), 'sgst': round(sgst, 2),
+                                   'igst': round(igst, 2), 'kfc': round(kfc, 2),
+                                   'grand_total': grand_total})
             context = {
-                "invoice": invoice_number,
+                "invoice": townie_invoice_id,
                 "billing_address": billing_address,
-                "shipping_address": '',
+                "shipping_address": billing_address,
                 "order_no": order_id,
                 "order_date": order.created_at,
                 "invoice_date": created_at,
@@ -280,23 +276,41 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
                 "gst_no": gst_number,
                 "product_details": townie_details,
                 # "vendor_address": vendor_address,
-                "sold_by": sold_by
+                "sold_by": 'Townie'
             }
-            template = get_template('townie_Invoice.html')
-            html = template.render(context)
-            file = open(settings.MEDIA_ROOT + str(invoice_number) + '.pdf', "w+b")
-            pisaStatus = pisa.CreatePDF(html.encode('utf-8'), dest=file,
-                                        encoding='utf-8')
-            file.seek(0)
-            pdf = file.read()
-            SENDER = 'townie.store@gmail.com'
-            deliver_email.apply_async(queue='normal', args=(pdf,
-                                                            SENDER,
-                                                            shop_email,
-                                                            str(invoice_number) + '.pdf'))
-            # deliver_email(pdf, customer_email, shop_email, str(invoice_number) + '.pdf')
-            file.close()
+            delivery_details = order.shop.shop_delivery_options.last()
+            if float(grand_total) > delivery_details.free_delivery_for:
+                product_details = product_details
 
+            else:
+                x = delivery_charge
+                y = 100 * x / 129
+                kfc = y / 100
+                cgst = (0.2248062016 * x - kfc) / 2
+                sgst = (0.2248062016 * x - kfc) / 2
+                grand_total = x + cgst + sgst + kfc
+                product_details.append({'name': 'Delivery charge', 'quantity': 1, 'unit_prize': x,
+                                        'total': x, 'cgst': round(cgst, 2), 'sgst': round(sgst, 2),
+                                        'igst': round(igst, 2), 'kfc': round(kfc,2 ),
+                                        'grand_total': grand_total})
+                product_details = product_details
+                grand_sum += grand_total
+            try:
+                template = get_template('townie_Invoice.html')
+                html = template.render(context)
+                file = open(settings.MEDIA_ROOT + str(townie_invoice_id) + '.pdf', "w+b")
+                pisaStatus = pisa.CreatePDF(html.encode('utf-8'), dest=file,
+                                            encoding='utf-8')
+                file.seek(0)
+                pdf = file.read()
+                SENDER = 'townie.store@gmail.com'
+                deliver_email.apply_async(queue='normal', args=(pdf,
+                                                                SENDER,
+                                                                shop_email,
+                                                                str(townie_invoice_id) + '.pdf'))
+                file.close()
+            except Exception as e:
+                db_logger.exception(e)
             x = delivery_charge
             y = 100 * x / 129
             kfc = y / 100
@@ -309,7 +323,6 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
                                     'grand_total': grand_total})
             product_details = product_details
             grand_sum += grand_total
-
         context = {
             "invoice": invoice_number,
             "billing_address": billing_address,

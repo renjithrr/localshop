@@ -566,10 +566,11 @@ class  OrderAcceptRejectView(APIView, ResponseViewMixin):
                         db_logger.exception(e)
             elif status == ORDER_STATUS.picked_up:
                 otp = request.data.get('otp')
-                if order.otp != otp:
-                    return self.success_response(code='HTTP_400_BAD_REQUEST',
-                                                 data={},
-                                                 message=INVALID_OTP)
+                if not order.delivery_type == DELIVERY_CHOICES.townie_ship:
+                    if order.otp != otp:
+                        return self.success_response(code='HTTP_400_BAD_REQUEST',
+                                                     data={},
+                                                     message=INVALID_OTP)
             elif status == ORDER_STATUS.delivered:
                 otp = request.data.get('otp')
                 if order.customer_otp != otp:
