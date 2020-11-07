@@ -23,17 +23,22 @@ class NearbyShopSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     pick_up = serializers.SerializerMethodField()
     home_delivery = serializers.SerializerMethodField()
+    shop_available = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
         fields = ['id', 'shop_name', 'address', 'business_name', 'distance', 'image', 'logo', 'lat', 'long', 'rating'
-            , 'category', 'pick_up', 'home_delivery']
+            , 'category', 'pick_up', 'home_delivery', 'shop_available']
 
     def get_distance(self, obj):
         location = self.context.get("location")
         if location:
             return round(obj.location.distance(location) * 100, 2)
         return ''
+
+    @staticmethod
+    def get_shop_available(obj):
+        return obj.available
 
     def get_category(self, obj):
         return {'id': obj.shop_category.id, 'name': obj.shop_category.name, 'card_type': obj.shop_category.card_type}
@@ -74,9 +79,14 @@ class NearbyShopSerializer(serializers.ModelSerializer):
 
 class ShopOrderSerializer(serializers.ModelSerializer):
     mobile_number = serializers.CharField(source='user.mobile_number')
+    shop_available = serializers.SerializerMethodField()
     class Meta:
         model = Shop
-        fields = ['shop_name', 'business_name', 'address', 'mobile_number', 'lat', 'long']
+        fields = ['shop_name', 'business_name', 'address', 'mobile_number', 'lat', 'long', 'shop_available']
+
+    @staticmethod
+    def get_shop_available(obj):
+        return obj.available
 
 
 class OrderSerializer(serializers.ModelSerializer):

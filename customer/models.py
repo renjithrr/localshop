@@ -98,5 +98,5 @@ class Invoice(AuditedModel, models.Model):
     invoice_id = models.IntegerField(default=0)
     order = models.ForeignKey(Order, related_name='order_invoices', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, related_name='shop_invoices', on_delete=models.CASCADE, blank=True, null=True)
-    townie_invoice_id = models.IntegerField(default=0)
+    townie_invoice_id = models.IntegerField(default=0, null=True, blank=True)
 

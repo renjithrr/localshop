@@ -523,6 +523,7 @@ class  AcceptedOrderView(GenericViewSet, ResponseViewMixin):
         except Product.DoesNotExist:
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
 
+
 class  OrderAcceptRejectView(APIView, ResponseViewMixin):
     permission_classes = [IsAuthenticated]
 

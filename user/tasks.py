@@ -159,7 +159,7 @@ def deliver_email(pdf, customer_email, shop_email, pdf_name):
 @shared_task()
 def delivery_system_call(**data):
     try:
-        response = requests.post('https://townie.in/delivery/v1/assignorder', data=json.dumps(data),
+        response = requests.post('https://api.townie.in/delivery/v1/assignorder', data=json.dumps(data),
                                  headers={'content-type': 'application/json'})
         db_logger.debug('Delivery boy response : {0} => {1}'.format(response.content, str(data)))
     except Exception as e:
