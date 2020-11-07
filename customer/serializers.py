@@ -353,7 +353,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
                  'quantity': product.quantity, 'mrp': product.product_id.mrp,
                  'lowest_selling_rate': product.product_id.lowest_selling_rate,
                  'moq': product.product_id.moq, 'offer_prize': product.product_id.offer_prize,
-                 'highest_selling_rate': product.product_id.highest_selling_rate, 'rating': product.product_id.rating,
+                 'highest_selling_rate': product.product_id.highest_selling_rate, 'rating': product.rating,
                  'shop': obj.shop.id if obj.shop else '', 'hsn_code': product.product_id.hsn_code,
                  'description': product.product_id.description, 'is_favourite': product.product_id.is_favourite,
                  'id': product.product_id.id, 'color': product.product_id.color,

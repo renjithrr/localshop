@@ -3,8 +3,9 @@ import io
 import csv
 
 from datetime import date, timedelta
-from django.db.models import Sum
+from django.db.models import Sum, Avg
 from django.db.models import Q
+
 
 from rest_framework.parsers import MultiPartParser, FileUploadParser
 
@@ -648,9 +649,14 @@ class  RateProductView(APIView, ResponseViewMixin):
     #     }))
     def post(self, request, *args, **kwargs):
         try:
+            order = Order.objects.get(id=request.data.get('order_id'))
             product = Product.objects.get(id=request.data.get('product_id'))
-            rating = request.data.get('rating')
-            product.rating = rating
+            order_item = OrderItem.objects.get(order_id=order,
+                                               product_id=product)
+            order_item.rating = request.data.get('rating')
+            order_item.save()
+            average_rating = OrderItem.objects.filter(product_id=product).aggregate(Avg('rating'))
+            product.rating = average_rating['rating__avg']
             product.save()
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS,

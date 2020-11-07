@@ -71,7 +71,7 @@ class Product(AuditedModel, models.Model):
     status = models.IntegerField(choices=CHOICES.choices(), blank=True, null=True, default=CHOICES.available)
     is_deleted = models.BooleanField(default=False)
     is_hidden = models.BooleanField(default=False)
-    rating = models.FloatField(default=5)
+    rating = models.FloatField(default=0)
     is_favourite = models.BooleanField(default=False)
     is_best_Seller = models.BooleanField(default=False)
     is_bargain_possible = models.BooleanField(default=False)

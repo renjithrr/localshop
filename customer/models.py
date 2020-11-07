@@ -83,7 +83,7 @@ class OrderItem(AuditedModel, models.Model):
     quantity = models.IntegerField(blank=True, null=True)
     rate = models.FloatField(max_length=100, blank=True, null=True)
     total = models.FloatField(max_length=100, blank=True, null=True)
-    # status = models.IntegerField(blank=True, null=True)
+    rating = models.FloatField(default=0)
 
     def __str__(self):
         return str(self.product_id)

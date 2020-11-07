@@ -954,7 +954,7 @@ class FavouriteProductView(APIView, ResponseViewMixin):
         from product.models import Product
         try:
             customer_favourites = \
-                CustomerFavouriteProduct.objects.filter(customer=Customer.objects.get(user=request.user))
+                CustomerFavouriteProduct.objects.filterrite(customer=Customer.objects.get(user=request.user))
             # print(customer_favourites)
             products = Product.objects.filter(id__in=list(customer_favourites.values_list('product_id', flat=True)),
                                               is_hidden=False, is_deleted=False)
