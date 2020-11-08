@@ -658,6 +658,12 @@ class  RateProductView(APIView, ResponseViewMixin):
             average_rating = OrderItem.objects.filter(product_id=product).aggregate(Avg('rating'))
             product.rating = average_rating['rating__avg']
             product.save()
+            try:
+                shop_rating = OrderItem.objects.filter(order_id__shop=product.shop).aggregate(Avg('rating'))
+                product.shop.rating = shop_rating['rating__avg']
+                product.shop.save()
+            except  Exception as e:
+                db_logger.exception(e)
             return self.success_response(code='HTTP_200_OK',
                                          message=SUCCESS,
                                          data={})
