@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
 from django.db.models import Sum
@@ -86,7 +87,10 @@ class ShopOrderSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_shop_available(obj):
-        return obj.available
+        if obj.opening < datetime.now().time() < obj.closing:
+            return True
+        else:
+            return False
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -338,7 +342,10 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_shop_available(obj):
-        return obj.shop.available
+        if obj.opening < datetime.now().time() < obj.closing:
+            return True
+        else:
+            return False
 
     @staticmethod
     def get_status_label(obj):
