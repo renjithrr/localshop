@@ -39,7 +39,10 @@ class NearbyShopSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_shop_available(obj):
-        return obj.available
+        if obj.opening < datetime.now().time() < obj.closing:
+            return True
+        else:
+            return False
 
     def get_category(self, obj):
         return {'id': obj.shop_category.id, 'name': obj.shop_category.name, 'card_type': obj.shop_category.card_type}
