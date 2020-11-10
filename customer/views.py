@@ -49,7 +49,7 @@ class NearbyShop(APIView, ResponseViewMixin):
             longitude = request.GET.get('longitude', 0)
             location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
             distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
-            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance)))).order_by('-available')
             if request.GET.get('shop_category', ''):
                 query_set = query_set.filter(shop_category=request.GET.get('shop_category', ''))
             serializer = NearbyShopSerializer(query_set, context={'location': location}, many=True)
@@ -407,7 +407,7 @@ class TrendingShopsView(APIView, ResponseViewMixin):
             longitude = request.GET.get('longitude', 0)
             location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
             distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
-            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
+            query_set = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance)))).order_by('-available')
             if request.GET.get('shop_category', ''):
                 query_set = query_set.filter(shop_category=request.GET.get('shop_category', ''))
             serializer = NearbyShopSerializer(query_set, context={'location': location}, many=True)
@@ -898,7 +898,8 @@ class SearchProductView(APIView, ResponseViewMixin):
             # location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
             # distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
             # shops = Shop.objects.filter(location__distance_lte=(location, D(km=int(distance))))
-            searched_shops = Shop.objects.filter(shop_name__icontains=request.GET.get('keyword', ''))
+            searched_shops = Shop.objects.filter(shop_name__icontains=request.GET.get('keyword', '')).\
+                order_by('-available')
             shop_serializer = NearbyShopSerializer(searched_shops, many=True)
             products = Product.objects.filter(name__icontains=request.GET.get('keyword', ''),
                                               is_hidden=False, is_deleted=False)
