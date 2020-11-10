@@ -345,7 +345,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_shop_available(obj):
-        if obj.opening < datetime.now().time() < obj.closing:
+        if obj.shop.opening < datetime.now().time() < obj.shop.closing:
             return True
         else:
             return False
