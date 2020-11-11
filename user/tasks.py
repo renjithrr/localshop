@@ -279,7 +279,7 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
                 "sold_by": 'Townie'
             }
             delivery_details = order.shop.shop_delivery_options.last()
-            if float(grand_total) > delivery_details.free_delivery_for:
+            if delivery_details.free_delivery_for and float(grand_total) > delivery_details.free_delivery_for:
                 product_details = product_details
 
             else:
