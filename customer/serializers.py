@@ -335,7 +335,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['shop', 'products', 'grand_total', 'created_at', 'rating', 'customer_otp', 'id', 'status',
-                  'status_label', 'shop_available']
+                  'status_label', 'shop_available', 'delivery_type']
 
     @staticmethod
     def get_shop(obj):
