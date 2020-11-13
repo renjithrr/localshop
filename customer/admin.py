@@ -1,5 +1,5 @@
 from django.contrib import admin
-from customer.models import Customer, Address, Order, OrderItem, CustomerFavouriteProduct
+from customer.models import Customer, Address, Order, OrderItem, CustomerFavouriteProduct, Invoice
 
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -21,9 +21,15 @@ class CustomerFavouriteProductAdmin(admin.ModelAdmin):
     list_display = ('id', 'product', 'product')
 
 
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'invoice_id', 'order', 'shop')
+
+
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Address, AddressAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
 admin.site.register(CustomerFavouriteProduct, CustomerFavouriteProductAdmin)
+admin.site.register(Invoice, InvoiceAdmin)
+
 

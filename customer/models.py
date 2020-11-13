@@ -2,6 +2,7 @@ from django.contrib.gis.db import models
 from user.models import AuditedModel, AppUser, PAYMENT_CHOICES, Shop, DELIVERY_CHOICES
 from utilities.utils import Kw, Konstants
 from product.models import Product
+from localshop.settings.storage_backends import PublicMediaStorage
 
 
 ADDRESS_TYPES = Konstants(
@@ -99,4 +100,6 @@ class Invoice(AuditedModel, models.Model):
     order = models.ForeignKey(Order, related_name='order_invoices', on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, related_name='shop_invoices', on_delete=models.CASCADE, blank=True, null=True)
     townie_invoice_id = models.IntegerField(default=0, null=True, blank=True)
+    customer_invoice_pdf = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    townie_invoice_pdf = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 

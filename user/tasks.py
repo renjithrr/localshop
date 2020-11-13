@@ -7,6 +7,7 @@ import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from django.core.files import File as DjangoFile
 
 import requests
 import json
@@ -180,11 +181,11 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
         order_id = order.id
         customer_email = customer.user.email
         shop_email = order.shop.user.email
-        invoice = Invoice.objects.filter(shop=order.shop)
+        invoice = Invoice.objects.filter(shop=order.shop).last()
         if invoice:
-            invoice_number = invoice.last().invoice_id + 1
-            created_at = invoice.last().created_at
-            Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
+            invoice_number = invoice.invoice_id + 1
+            created_at = invoice.created_at
+            invoice = Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
         else:
             invoice_number = 1
             invoice = Invoice.objects.create(invoice_id=invoice_number, shop=order.shop, order=order)
@@ -245,7 +246,7 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
             grand_sum += grand_total
 
         elif delivery_type == DELIVERY_CHOICES.townie_ship:
-            invoice = invoice.last()
+            invoice = invoice
             townie_invoice_id = invoice.townie_invoice_id +1
             invoice.townie_invoice_id = townie_invoice_id
             invoice.save()
@@ -304,6 +305,10 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
                                             encoding='utf-8')
                 file.seek(0)
                 pdf = file.read()
+                file_obj1 = DjangoFile(open(settings.MEDIA_ROOT + str(invoice_number) + '.pdf', mode='rb'),
+                                       name=str(invoice_number) + '.pdf')
+                invoice.townie_invoice_pdf = file_obj1
+                invoice.save()
                 SENDER = 'townie.store@gmail.com'
                 deliver_email.apply_async(queue='normal', args=(pdf,
                                                                 SENDER,
@@ -341,11 +346,18 @@ def render_to_pdf(delivery_type, customer, order, delivery_charge):
 
         template = get_template('townie_Invoice.html')
         html = template.render(context)
+
         file = open(settings.MEDIA_ROOT + str(invoice_number) + '.pdf', "w+b")
         pisaStatus = pisa.CreatePDF(html.encode('utf-8'), dest=file,
                                     encoding='utf-8')
         file.seek(0)
         pdf = file.read()
+
+        file_obj1 = DjangoFile(open(settings.MEDIA_ROOT + str(invoice_number) + '.pdf', mode='rb'),
+                               name=str(invoice_number) + '.pdf')
+
+        invoice.customer_invoice_pdf = file_obj1
+        invoice.save()
         deliver_email.apply_async(queue='normal', args=(pdf,
                                                         customer_email,
                                                         shop_email,
