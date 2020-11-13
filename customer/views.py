@@ -20,7 +20,7 @@ from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, 
     CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer,\
     CustomerOrderHistorySerializer, CustomerProductSearchSerializer, ServiceAreaSerializer
 from utilities.mixins import ResponseViewMixin
-from utilities.messages import SUCCESS, GENERAL_ERROR
+from utilities.messages import SUCCESS, GENERAL_ERROR, SHOP_CLOSED
 from utilities.utils import deliver_sms, OTPgenerator, payment_calculation
 from user.models import ShopCategory, AppUser, AppConfigData, ServiceArea, Coupon,\
     DELIVERY_CHOICES, USER_TYPE_CHOICES
@@ -634,9 +634,6 @@ class GenerateTokenView(APIView, ResponseViewMixin):
     @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
     def post(self, request):
         try:
-
-            address_id = request.data.get('address_id', '')
-            # address = Address.objects.get(id=address_id)
             token = ''
             coupon_applied = False
             shop_id = request.data.get('shop_id', '')
@@ -645,6 +642,10 @@ class GenerateTokenView(APIView, ResponseViewMixin):
             total = 0
             rate = 0
             shop = Shop.objects.get(id=shop_id)
+            if shop.opening < datetime.now().time() < shop.closing:
+                pass
+            else:
+                return self.error_response(code='HTTP_400_BAD_REQUEST', message=SHOP_CLOSED)
             products = request.data.get('products')
             order = Order.objects.create(payment_status=PAYMENT_STATUS.pending,
                                          status=ORDER_STATUS.pending, shop=shop,

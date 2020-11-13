@@ -9,4 +9,5 @@ SUCCESS = 'Success'
 NOT_A_CSV_FORMAT = 'Not a CSV format'
 USER_NOT_REGISTERED = 'Not a registered user'
 PRODUCT_CODE_EXISTS = 'Product with this product code already exists'
+SHOP_CLOSED = "The shop seems to be closed"
 
