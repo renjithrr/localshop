@@ -1,6 +1,6 @@
 import logging
 import json
-import requests
+from datetime import datetime, date, timedelta
 from django.contrib.gis.geos import Point
 from django.db.models import Q
 from rest_framework. viewsets import GenericViewSet
@@ -186,6 +186,16 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                 shop = serializer.save()
                 if request.FILES.get('gst_image', ''):
                     shop.gst_image = request.FILES['gst_image']
+                try:
+                    opening = (datetime.combine(date.today(), datetime.strptime(data['opening'], "%H:%M").time())
+                               - timedelta(hours=5, minutes=30)).time()
+
+                    closing = (datetime.combine(date.today(), datetime.strptime(data['opening'], "%H:%M").time())
+                               - timedelta(hours=5, minutes=30)).time()
+                    shop.opening = opening
+                    shop.closing = closing
+                except Exception as e:
+                    db_logger.exception(e)
                 shop.save()
                 if data['email']:
                     shop.user.email = data['email']
