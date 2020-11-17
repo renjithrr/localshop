@@ -190,7 +190,7 @@ class ShopDetailsView(GenericViewSet, ResponseViewMixin):
                     opening = (datetime.combine(date.today(), datetime.strptime(data['opening'], "%H:%M").time())
                                - timedelta(hours=5, minutes=30)).time()
 
-                    closing = (datetime.combine(date.today(), datetime.strptime(data['opening'], "%H:%M").time())
+                    closing = (datetime.combine(date.today(), datetime.strptime(data['closing'], "%H:%M").time())
                                - timedelta(hours=5, minutes=30)).time()
                     shop.opening = opening
                     shop.closing = closing
@@ -538,7 +538,7 @@ class OrderProcessView(APIView, ResponseViewMixin):
         try:
             order = Order.objects.get(id=order_id)
 
-            # pdf = render_to_pdf(1, order.customer, order, 30)
+            # pdf = render_to_pdf(1, order.customer.id, order.id, 30)
             order.status = status
             order.save()
             return self.success_response(code='HTTP_200_OK', message=SUCCESS,
