@@ -1,3 +1,4 @@
+from datetime import datetime, date, timedelta
 from rest_framework import serializers
 from user.models import AppUser as User, Shop, DeliveryOption, DeliveryVehicle, UserPaymentMethod, PaymentMethod
 
@@ -12,6 +13,9 @@ class ShopDetailSerializer(serializers.ModelSerializer):
     non_gst = serializers.SerializerMethodField()
     gst_image = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
+    opening = serializers.SerializerMethodField()
+    closing = serializers.SerializerMethodField()
+
     class Meta:
         model = Shop
         fields = ['user', 'vendor_name', 'shop_name', 'business_name', 'shop_category', 'gst_reg_number', 'opening',
@@ -26,6 +30,12 @@ class ShopDetailSerializer(serializers.ModelSerializer):
     def get_email(self, obj):
         return obj.user.email
 
+    def get_opening(self, obj):
+        return (datetime.combine(date.today(), obj.opening) + timedelta(hours=5, minutes=30)).time()
+
+    def get_closing(self, obj):
+        return (datetime.combine(date.today(), obj.closing) + timedelta(hours=5, minutes=30)).time()
+    
 
 class ShopLocationDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,6 +75,8 @@ class DeliveryRetrieveSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     non_gst = serializers.SerializerMethodField()
+    opening = serializers.SerializerMethodField()
+    closing = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -73,6 +85,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_non_gst(self, obj):
         return False if obj.gst_reg_number else True
+
+    def get_opening(self, obj):
+        return (datetime.combine(date.today(), obj.opening) + timedelta(hours=5, minutes=30)).time()
+
+    def get_closing(self, obj):
+        return (datetime.combine(date.today(), obj.closing) + timedelta(hours=5, minutes=30)).time()
 
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
