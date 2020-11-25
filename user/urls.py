@@ -45,7 +45,7 @@ urlpatterns = [
     path('availability/', ShopAvailabilityView.as_view()),
     path('order-status-change/', OrderProcessView.as_view()),
     path('confirm-delivery/', ConfirmDeliveryView.as_view()),
-    # path('delivery-option/', DeliveryOptionView.as_view()),
+    path('is-under-service-area/', IsUnderServiceAreaView.as_view()),
     # path('devices/', DeviceTokenView.as_view()),
 ]
 urlpatterns += router.urls

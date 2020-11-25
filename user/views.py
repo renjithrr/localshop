@@ -2,6 +2,7 @@ import logging
 import json
 from datetime import datetime, date, timedelta
 from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import *
 from django.db.models import Q
 from rest_framework. viewsets import GenericViewSet
 from rest_framework.views import APIView
@@ -16,13 +17,14 @@ from utilities.messages import GENERAL_ERROR, DATA_SAVED_SUCCESSFULLY, INVALID_O
 from utilities.utils import OTPgenerator, id_generator
 from utilities.pagination import CustomOffsetPagination
 from user.models import USER_TYPE_CHOICES, AppUser, Shop, DELIVERY_CHOICES, ShopCategory,\
-    PaymentMethod, UserPaymentMethod, DeliveryOption
+    PaymentMethod, UserPaymentMethod, DeliveryOption, AppConfigData, ServiceArea
 from user.tasks import deliver_sms, render_to_pdf, delivery_system_call
 from user.serializers import AccountSerializer, ShopDetailSerializer, ShopLocationDataSerializer, ProfileSerializer,\
     DeliveryDetailSerializer, VehicleDetailSerializer, DeliveryRetrieveSerializer, UserPaymentSerializer
 from customer.serializers import OrderHistorySerializer
 from product.models import ORDER_STATUS
 from customer.models import Order
+
 
 db_logger = logging.getLogger('db')
 
@@ -571,4 +573,27 @@ class ConfirmDeliveryView(APIView, ResponseViewMixin):
         except Exception as e:
             # db_logger.exception(e)
             print(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class IsUnderServiceAreaView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+
+            latitude = request.GET.get('lat', '')
+            longitude = request.GET.get('long', '')
+            location = fromstr(f'POINT({longitude} {latitude})', srid=4326)
+            distance = AppConfigData.objects.get(key='SHOP_BASE_RADIUS').value
+            distance1 = ServiceArea.objects.last().location.distance(location)
+            if float(distance) > distance1:
+                is_under_service_area = True
+            else:
+                is_under_service_area = False
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'is_under_service_area': is_under_service_area},
+                                         message=SUCCESS)
+        except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
