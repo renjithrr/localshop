@@ -566,7 +566,7 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
     @swagger_auto_schema(tags=['customer'], manual_parameters=[address_id])
     def post(self, request):
         try:
-
+            pick_up = False
             address_id = request.data.get('address_id', '')
             address = Address.objects.get(id=address_id)
             latitude = address.lat
@@ -582,7 +582,7 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                                              data={'is_delivery_available': False},
                                              message=SUCCESS)
             delivery_charge = 0
-
+            charge = []
             total_amount = 0
             products = request.data.get('products')
             for value in products:
@@ -613,13 +613,32 @@ class DeliveryChargeView(APIView, ResponseViewMixin):
                         delivery_charge = AppConfigData.objects.get(key='TOWNIE_CHARGE').value
                 elif DELIVERY_CHOICES.bulk_delivery in delivery_type:
                     delivery_charge = 0
+                    try:
+                        vehicle = delivery_details.delivery_option_vehicle.last()
+                        charge = [{'title': vehicle.vehicle_and_capacity,'minimum_charge': vehicle.min_charge,
+                                  'minimum_charge_km': vehicle.within_km,
+                                  'extra_charge_per_km': vehicle.extra_charge_per_km}]
+                    except Exception as e:
+                        charge = []
+                        db_logger.exception(e)
 
             except Exception as e:
                 db_logger.exception(e)
+            try:
+                delivery_option = shop.shop_delivery_options.all().last()
+                for value in delivery_option.delivery_type:
+                    if int(value) == DELIVERY_CHOICES.bulk_delivery or int(value) == DELIVERY_CHOICES.self_delivery \
+                            or int(value) == DELIVERY_CHOICES.townie_ship:
+                        pick_up = True
+                        break
 
+            except Exception as e:
+                db_logger.exception(e)
             return self.success_response(code='HTTP_200_OK',
                                          data={'delivery_charge': delivery_charge,
-                                               'service_available_now': service_available_now},
+                                               'service_available_now': service_available_now,
+                                               'is_home_delivery_available': pick_up,
+                                               'transport_charges': charge},
                                          message=SUCCESS)
         except Exception as e:
             db_logger.exception(e)
