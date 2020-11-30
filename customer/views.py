@@ -322,7 +322,7 @@ class ProductVarientView(APIView, ResponseViewMixin):
             products = product.product_varients.all()
             serializer = VarientSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
-                                         data={'orders': serializer.data,
+                                         data={'product_variants': serializer.data,
                                                },
                                          message=SUCCESS)
         except Exception as e:
@@ -975,7 +975,7 @@ class FavouriteProductView(APIView, ResponseViewMixin):
         from product.models import Product
         try:
             customer_favourites = \
-                CustomerFavouriteProduct.objects.filterrite(customer=Customer.objects.get(user=request.user))
+                CustomerFavouriteProduct.objects.filter(customer=Customer.objects.get(user=request.user))
             # print(customer_favourites)
             products = Product.objects.filter(id__in=list(customer_favourites.values_list('product_id', flat=True)),
                                               is_hidden=False, is_deleted=False)

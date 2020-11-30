@@ -302,10 +302,15 @@ class DeliveryOptionView(GenericViewSet, ResponseViewMixin):
             if serializer.is_valid():
                 delivery = serializer.save()
                 delivery.save()
-                request.data['delivery_option'] = delivery.id
-                vehicle_details = VehicleDetailSerializer(data=request.data.get('delivery_vehicle'), many=True)
+                delivery_vehicle = request.data.get('delivery_vehicle')
+                for value in delivery_vehicle:
+                    value['delivery_option'] = delivery.id
+                print(delivery_vehicle)
+                vehicle_details = VehicleDetailSerializer(data=delivery_vehicle, many=True)
                 if vehicle_details.is_valid():
                     vehicle_details.save()
+                else:
+                    return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(vehicle_details.errors))
             else:
                 return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=str(serializer.errors))
             return self.success_response(code='HTTP_200_OK',

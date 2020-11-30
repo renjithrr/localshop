@@ -24,7 +24,7 @@ urlpatterns = [
     path('edit-account', AccountEditView.as_view()),
     path('favourite', CustomerFavouriteView.as_view()),
     path('product-varients', ProductVarientView.as_view()),
-    path('product-varients', ProductVarientView.as_view()),
+    # path('product-varients', ProductVarientView.as_view()),
     path('order', OrderView.as_view()),
     path('shop', ShopView.as_view()),
     path('banners', BannerView.as_view()),
