@@ -180,10 +180,10 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     def get_is_favourite(self, obj):
         # print(self.context)
-        if self.context:
+        if self.context.get('user'):
             # print(self.context.get('user'), "aaaaaaaa")
             return True if CustomerFavouriteProduct.objects.filter(product=obj,
-                                                       customer=Customer.objects.get(user=self.context))\
+                                                       customer=Customer.objects.get(user=self.context.get('user')))\
                 else obj.is_favourite
         return False
 
@@ -207,7 +207,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
         # # print(self.context.get('user'), "Dddddddd")
         if search:
             products = products.filter(name__icontains=search)
-        return ProductListSerializer(products, context=shop.user, many=True).data
+        return ProductListSerializer(products, context=self.context, many=True).data
         # return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
         #          'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
         #          'moq': product.moq, 'offer_prize': product.offer_prize,

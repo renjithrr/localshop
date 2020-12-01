@@ -169,7 +169,7 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
 
 
 class ProductListing(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     # latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
     #                              type=openapi.TYPE_STRING)
@@ -197,7 +197,8 @@ class ProductListing(APIView, ResponseViewMixin):
             # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
             else:
                 categories = Category.objects.filter(product__isnull=False, product__shop=shop)
-            product_serializer = CustomerProductSerializer(categories, context={'shop': shop, 'search': search},
+            product_serializer = CustomerProductSerializer(categories, context={'shop': shop, 'search': search,
+                                                                                'user': request.user},
                                                            many=True)
             # product_serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
