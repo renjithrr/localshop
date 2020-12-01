@@ -983,7 +983,7 @@ class FavouriteProductView(APIView, ResponseViewMixin):
             if keyword:
                 products = products.filter(name__icontains=request.GET.get('keyword', ''))
             # products = shop.shop_products.filter(is_hidden=False, is_deleted=False)
-            product_serializer = CustomerProductSearchSerializer(products, many=True)
+            product_serializer = CustomerProductSearchSerializer(products, many=True, context={'user': request.user})
             # product_serializer = CustomerProductSerializer(products, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'products': product_serializer.data

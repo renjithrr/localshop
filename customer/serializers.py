@@ -207,7 +207,7 @@ class CustomerProductSerializer(serializers.ModelSerializer):
         # # print(self.context.get('user'), "Dddddddd")
         if search:
             products = products.filter(name__icontains=search)
-        return ProductListSerializer(products, context=self.context.get('user'), many=True).data
+        return ProductListSerializer(products, context=shop.user, many=True).data
         # return [{'name': product.name, 'brand': product.brand, 'size': product.size, 'quantity':product.quantity,
         #          'mrp':product.mrp, 'lowest_selling_rate': product.lowest_selling_rate,
         #          'moq': product.moq, 'offer_prize': product.offer_prize,
@@ -379,7 +379,7 @@ class CustomerOrderHistorySerializer(serializers.ModelSerializer):
 class CustomerProductSearchSerializer(serializers.ModelSerializer):
     product_images = serializers.SerializerMethodField('get_product_images')
     shop_details = serializers.SerializerMethodField()
-    # shop_name = serializers.SerializerMethodField()
+    is_favourite = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -400,8 +400,12 @@ class CustomerProductSearchSerializer(serializers.ModelSerializer):
     def get_shop_details(self, obj):
         return NearbyShopSerializer(obj.shop).data
 
-
-
+    def get_is_favourite(self, obj):
+        # print(self.context)
+        if self.context:
+            # print(self.context.get('user'), "aaaaaaaa")
+            return True
+        return obj.is_favourite
 
 class ServiceAreaSerializer(serializers.ModelSerializer):
 
