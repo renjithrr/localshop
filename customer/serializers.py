@@ -181,9 +181,9 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_is_favourite(self, obj):
         # print(self.context)
         if self.context.get('user'):
-            # print(self.context.get('user'), "aaaaaaaa")
-            return True if CustomerFavouriteProduct.objects.filter(product=obj,
-                                                       customer=Customer.objects.get(user=self.context.get('user')))\
+            if not self.context.get('user').anonymous:
+                return True if CustomerFavouriteProduct.objects.filter(product=obj,
+                                                           customer=Customer.objects.get(user=self.context.get('user')))\
                 else obj.is_favourite
         return False
 

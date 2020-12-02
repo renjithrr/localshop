@@ -169,7 +169,7 @@ class CustomerAddressView(GenericViewSet, ResponseViewMixin):
 
 
 class ProductListing(APIView, ResponseViewMixin):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     # latitude = openapi.Parameter('latitude', openapi.IN_QUERY, description="latitude",
     #                              type=openapi.TYPE_STRING)
