@@ -155,8 +155,18 @@ class Coupon(AuditedModel, models.Model):
     discount = models.IntegerField(blank=True, null=True)
     is_percentage = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    shops = models.ManyToManyField(Shop, blank=True, null=True, related_name='shop_coupons')
+    from_date = models.DateField(blank=True, null=True)
+    to_date = models.DateField(blank=True, null=True)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
+    shop = models.ForeignKey(Shop, blank=True, null=True, related_name='shop_coupons', on_delete=models.CASCADE)
 
+
+class Banner(AuditedModel, models.Model):
+    is_active = models.BooleanField(default=True)
+    from_date = models.DateField(blank=True, null=True)
+    to_date = models.DateField(blank=True, null=True)
+    shop = models.ForeignKey(Shop, blank=True, null=True, related_name='shop_banners', on_delete=models.CASCADE)
+    image = models.ImageField(storage=PublicMediaStorage(), blank=True, null=True)
 
 
 class DeliveryOption(AuditedModel, models.Model):

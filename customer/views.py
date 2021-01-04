@@ -953,7 +953,7 @@ class TrendingOfferView(APIView, ResponseViewMixin):
     def get(self, request):
         try:
             coupon = Coupon.objects.filter(is_active=True)
-            query_set = Shop.objects.filter(id__in=coupon.values_list('shops', flat=True))
+            query_set = Shop.objects.filter(id__in=coupon.values_list('shop', flat=True))
             serializer = ShopBannerSerializer(query_set, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'shops': serializer.data},

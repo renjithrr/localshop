@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.gis.geos import Point
 
 from user.models import AppUser, DeviceToken, Shop, AppConfigData, ShopCategory, PaymentMethod, UserPaymentMethod, \
-    DeliveryVehicle, DeliveryOption, ServiceArea, Coupon
+    DeliveryVehicle, DeliveryOption, ServiceArea, Coupon, Banner
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -52,7 +52,11 @@ class ServiceAreaAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 class CouponAdmin(admin.ModelAdmin):
-    list_display = ('id', 'code', 'discount', 'is_percentage', 'is_active')
+    list_display = ('id', 'code', 'discount', 'is_percentage', 'from_date', 'to_date', 'shop')
+
+
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'shop', 'from_date', 'to_date', 'shop')
 
 
 admin.site.register(AppUser, UserAdmin)
@@ -66,4 +70,5 @@ admin.site.register(DeliveryVehicle, DeliveryVehicleAdmin)
 admin.site.register(DeliveryOption, DeliveryOptionAdmin)
 admin.site.register(ServiceArea, ServiceAreaAdmin)
 admin.site.register(Coupon, CouponAdmin)
+admin.site.register(Banner, BannerAdmin)
 

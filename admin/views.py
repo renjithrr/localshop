@@ -7,11 +7,12 @@ from utilities.utils import id_generator
 from customer.models import Order, Shop
 from user.models import Shop
 from admin.serializers import AdminOrderSerializer, OrderDetailsSerializer, AdminShopSerializer, ShopDetailsSerializer, ProductsSerializer
-from user.models import AppUser,USER_TYPE_CHOICES
+from user.models import AppUser,USER_TYPE_CHOICES, Banner, Coupon
 from customer.models import Customer
 from product.models import Product
 
 from rest_framework.authtoken.models import Token
+from rest_framework.parsers import MultiPartParser, FileUploadParser
 
 
 import datetime
@@ -167,4 +168,62 @@ class AdminProductsView(APIView, ResponseViewMixin):
                                          data=serializer.data,
                                          message=SUCCESS)
         except Exception as e:
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class OfferImageView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+    parser_classes = (MultiPartParser, FileUploadParser)
+
+    def post(self, request):
+        try:
+            shop_id = request.data.get('shop_id')
+            # image = request.data.get('image', '')
+            is_offer_image = request.data.get('is_offer_image', '')
+            from_date  = request.data.get('from_date', '')
+            to_date = request.data.get('to_date', '')
+            try:
+                shop = Shop.objects.get(id=shop_id)
+                if is_offer_image == 'false':
+                    coupon, _ = Coupon.objects.get_or_create(from_date=from_date, to_date=to_date, shop=shop)
+                    coupon.image = request.FILES['image']
+                    coupon.save()
+                else:
+                    coupon, _ = Banner.objects.get_or_create(from_date=from_date, to_date=to_date, shop=shop)
+                    coupon.image = request.FILES['image']
+                    coupon.save()
+                return self.success_response(code='HTTP_200_OK',
+                                             data={'image_url': coupon.image.url},
+                                             message=SUCCESS)
+            except Exception as e:
+                print(e)
+                return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+        except Exception as e:
+            print(e)
+            db_logger.exception(e)
+            return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
+
+
+class OfferDetailsView(APIView, ResponseViewMixin):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            offer_code = request.data.get('offer_code')
+            image = request.data.get('image', '')
+            try:
+                shop = Shop.objects.get(id=shop_id)
+                photo.image = request.FILES['image']
+                photo.save()
+            except Shop.DoesNotExist:
+                pass
+
+            return self.success_response(code='HTTP_200_OK',
+                                         data={'image_url': image.url},
+                                         message=SUCCESS)
+
+        except Exception as e:
+            db_logger.exception(e)
             return self.error_response(code='HTTP_500_INTERNAL_SERVER_ERROR', message=GENERAL_ERROR)
