@@ -3,7 +3,7 @@ from rest_framework import serializers
 from drf_yasg.utils import swagger_serializer_method
 from django.db.models import Sum
 
-from user.models import Shop, DeliveryOption, DELIVERY_CHOICES, ServiceArea
+from user.models import Shop, DeliveryOption, DELIVERY_CHOICES, ServiceArea, Banner, Coupon
 from product.models import Product, ProductVarientImage, ProductImage, ProductVarient,  Category
 from product.serializers import ProductListingSerializer
 from customer.models import Address, ADDRESS_TYPES, Order, OrderItem, Customer, ORDER_STATUS, PAYMENT_CHOICES,\
@@ -317,14 +317,32 @@ class CustomerShopSerializer(serializers.ModelSerializer):
 
 class ShopBannerSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    shop_name = serializers.SerializerMethodField()
 
     class Meta:
-        model = Shop
-        fields = ['id', 'shop_name', 'image']
+        model = Banner
+        fields = ['id', 'shop_name', 'image', 'shop']
 
     def get_image(self, obj):
         return obj.image.url if obj.image else ''
 
+    def get_shop_name(self, obj):
+        return obj.shop.shop_name
+
+
+class OfferSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    shop_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Coupon
+        fields = ['id', 'shop_name', 'image', 'shop']
+
+    def get_image(self, obj):
+        return obj.image.url if obj.image else ''
+
+    def get_shop_name(self, obj):
+        return obj.shop.shop_name
 
 class CustomerOrderHistorySerializer(serializers.ModelSerializer):
     shop = serializers.SerializerMethodField()

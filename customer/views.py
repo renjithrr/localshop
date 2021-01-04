@@ -18,12 +18,12 @@ from drf_yasg.utils import swagger_auto_schema
 from user.models import Shop
 from customer.serializers import NearbyShopSerializer, CustomerOrderSerializer, CustomerAddressSerializer, \
     CustomerProductSerializer, VarientSerializer, CustomerShopSerializer, ShopBannerSerializer,\
-    CustomerOrderHistorySerializer, CustomerProductSearchSerializer, ServiceAreaSerializer
+    CustomerOrderHistorySerializer, CustomerProductSearchSerializer, ServiceAreaSerializer, OfferSerializer
 from utilities.mixins import ResponseViewMixin
 from utilities.messages import SUCCESS, GENERAL_ERROR, SHOP_CLOSED
 from utilities.utils import deliver_sms, OTPgenerator, payment_calculation
 from user.models import ShopCategory, AppUser, AppConfigData, ServiceArea, Coupon,\
-    DELIVERY_CHOICES, USER_TYPE_CHOICES
+    DELIVERY_CHOICES, USER_TYPE_CHOICES, Banner
 from customer.models import Customer, Address, CustomerFavouriteProduct, Order, PAYMENT_STATUS, ORDER_STATUS,\
     PAYMENT_CHOICES, OrderItem
 from product.models import Product, Category, ProductVarient
@@ -381,8 +381,8 @@ class BannerView(APIView, ResponseViewMixin):
 
     def get(self, request):
         try:
-            shop = Shop.objects.all()
-            serializer = ShopBannerSerializer(shop, many=True)
+            banners = Banner.objects.filter(from_date__lte=datetime.today(), to_date__gte=datetime.today())
+            serializer = ShopBannerSerializer(banners, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'shop_details': serializer.data,
                                                },
@@ -952,9 +952,9 @@ class TrendingOfferView(APIView, ResponseViewMixin):
                          responses={'500': GENERAL_ERROR, '200': NearbyShopSerializer})
     def get(self, request):
         try:
-            coupon = Coupon.objects.filter(is_active=True)
-            query_set = Shop.objects.filter(id__in=coupon.values_list('shop', flat=True))
-            serializer = ShopBannerSerializer(query_set, many=True)
+            coupon = Coupon.objects.filter(from_date__lte=datetime.today(), to_date__gte=datetime.today())
+            # query_set = Shop.objects.filter(id__in=coupon.values_list('shop', flat=True))
+            serializer = OfferSerializer(coupon, many=True)
             return self.success_response(code='HTTP_200_OK',
                                          data={'shops': serializer.data},
                                          message=SUCCESS)
