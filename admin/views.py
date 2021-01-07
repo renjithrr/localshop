@@ -172,7 +172,7 @@ class AdminProductsView(APIView, ResponseViewMixin):
 
 
 class OfferImageView(APIView, ResponseViewMixin):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FileUploadParser)
 
     def post(self, request):
