@@ -1,7 +1,7 @@
 Django==3.0.5
 drf-yasg==1.17.1
 gunicorn==20.0.4
-djangorestframework==3.11.0
+djangorestframework==3.11.2
 psycopg2-binary==2.8.5
 supervisor==4.2.0
 boto3==1.13.16
