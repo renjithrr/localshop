@@ -18,5 +18,5 @@ fcm-django==0.3.4
 pyfcm==1.4.7
 xhtml2pdf==0.2.5
 reportlab==3.5.53
-celery==4.4.7
+celery==5.2.2
 django-celery-beat==2.0.0
